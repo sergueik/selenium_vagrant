@@ -25,20 +25,24 @@ SELENIUM_ARGS="-role $ROLE -port $HUB_PORT"
 . /lib/init/vars.sh
 . /lib/lsb/init-functions
 
-DAEMON_ARGS="--name $ROLE --quiet --pidfile $PIDFILE --user $SELENIUM_USER"
+DAEMON_ARGS="--quiet --pidfile $PIDFILE --user $SELENIUM_USER"
 DAEMON_CMD="/usr/bin/java -- $JVM_ARGS -jar ${SELENIUM_HOME}/selenium.jar ${SELENIUM_ARGS}"
 echo $DAEMON_CMD
 start() {
+    JAVA_CHECK=`which java`
+    logger "Selenium Java check =${JAVA_CHECK}.:"
+
+    USER_CHECK=`whoami`
+    logger "Selenium User check =${USER_CHECK}.:"
     logger "Starting Selenium Grid in ${SERVICE_ROLE} mode..."
 
     mkdir -p "$LOGFILE_DIR" "$PIDFILE_DIR"
     chown -R $SELENIUM_USER "$LOGFILE_DIR" "$PIDFILE_DIR"
 
-    export DISPLAY
-
     start-stop-daemon $DAEMON_ARGS --start --background --make-pidfile --chuid $SELENIUM_USER --exec $DAEMON_CMD
     RETVAL="$?"
 
+    logger "Selenium Status check =${RETVAL}.:"
     return "$RETVAL"
 }
 
@@ -47,6 +51,7 @@ stop() {
 
     start-stop-daemon $DAEMON_ARGS --stop --retry=TERM/30/KILL/5
     RETVAL="$?"
+ logger "Stop Selenium Grid instance...=>${RETVAL}."
 
     rm -f $PIDFILE
 

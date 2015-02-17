@@ -1,9 +1,6 @@
 #!/bin/sh
-
-
 # set -x
 set -e
-
 SELENIUM_USER='root'
 SELENIUM_HOME='/root/selenium'
 SERVICE_NAME='selenium'
@@ -11,55 +8,41 @@ PATH=/sbin:/usr/sbin:/bin:/usr/bin
 DEFAULTS="/etc/default/${SERVICE_NAME}"
 INITSCRIPT="$(basename "$0")"
 JOB="${INITSCRIPT%.sh}"
-
-export NODE_PORT=<%= @node_port %>
-export HUB_IP_ADDRESS=<%= @hub_ip %>
-export HUB_PORT=<%= @hub_port %>
-export NODE_CONFIG="${SELENIUM_HOME}/node.json"
-export DISPLAY_PORT=<%= @display_port %>
-export JVM_ARGS='-Xmn128M -Xms256M -Xmx256M'
-export SELENIUM_JAR_VERSION=2.44.0 # currently unused
-export ROLE=node
-
-PIDFILE="/var/run/${ROLE}.pid"
+PIDFILE='/var/run/hub.pid'
 LOGFILE_DIR='var/log'
 PIDFILE_DIR='/var/run'
 COMMAND="$1"
+export JVM_ARGS='-XX:MaxPermSize=256M -Xmn128M -Xms256M -Xmx256M'
+export HUB_PORT=<%= @hub_port %>
+export SELENIUM_JAR_VERSION=2.44.0 # currently unused
+export ROLE=hub
 
-# TODO: process when JAVA_HOME not ser
-export JAVA_HOME='/usr/bin'
-SELENIUM_ARGS=`cat<<END_ARGS
--role $ROLE \
--port $NODE_PORT \
--hub http://${HUB_IP_ADDRESS}:${HUB_PORT}/hub/register \
--nodeConfig $NODE_CONFIG  \
--browserTimeout 12000 -timeout 12000 \
--ensureCleanSession true \
--trustAllSSLCertificates
-END_ARGS
-`
-export SELENIUM_ARGS
+# TODO: process when JAVA_HOME not set 
+
+SELENIUM_ARGS="-role $ROLE -port $HUB_PORT"
+
 [ -r "$DEFAULTS" ] && . "$DEFAULTS"
 . /lib/init/vars.sh
 . /lib/lsb/init-functions
-DAEMON_ARGS="--name $ROLE --quiet --pidfile $PIDFILE --user $SELENIUM_USER"
-DAEMON_CMD="/usr/bin/java -- $JVM_ARGS -jar ${SELENIUM_HOME}/selenium.jar ${SELENIUM_ARGS}"
-if [ "$DEBUG" != "" ]  
-then
-  echo $DAEMON_CMD
-fi
 
+DAEMON_ARGS="--quiet --pidfile $PIDFILE --user $SELENIUM_USER"
+DAEMON_CMD="/usr/bin/java -- $JVM_ARGS -jar ${SELENIUM_HOME}/selenium.jar ${SELENIUM_ARGS}"
+echo $DAEMON_CMD
 start() {
+    JAVA_CHECK=`which java`
+    logger "Selenium Java check =${JAVA_CHECK}.:"
+
+    USER_CHECK=`whoami`
+    logger "Selenium User check =${USER_CHECK}.:"
     logger "Starting Selenium Grid in ${SERVICE_ROLE} mode..."
 
     mkdir -p "$LOGFILE_DIR" "$PIDFILE_DIR"
     chown -R $SELENIUM_USER "$LOGFILE_DIR" "$PIDFILE_DIR"
 
-    export DISPLAY=:$DISPLAY_PORT
-
     start-stop-daemon $DAEMON_ARGS --start --background --make-pidfile --chuid $SELENIUM_USER --exec $DAEMON_CMD
     RETVAL="$?"
 
+    logger "Selenium Status check =${RETVAL}.:"
     return "$RETVAL"
 }
 
@@ -68,6 +51,7 @@ stop() {
 
     start-stop-daemon $DAEMON_ARGS --stop --retry=TERM/30/KILL/5
     RETVAL="$?"
+ logger "Stop Selenium Grid instance...=>${RETVAL}."
 
     rm -f $PIDFILE
 
@@ -80,6 +64,7 @@ status() {
     else
         log_daemon_msg "$SERVICE_NAME: Process is not running."
         log_end_msg 0
+        exit 4
     fi
 }
 

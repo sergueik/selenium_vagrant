@@ -80,6 +80,7 @@ status() {
     else
         log_daemon_msg "$SERVICE_NAME: Process is not running."
         log_end_msg 0
+        exit 4
     fi
 }
 

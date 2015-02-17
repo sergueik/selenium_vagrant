@@ -8,11 +8,6 @@ end
 
 # TODO - generate profile directories
 
-puts  \
-node['selenium']['display_driver']['install_flavor']
-
-
-
 
 # http://www.abdevelopment.ca/blog/start-vnc-server-ubuntu-boot
 cookbook_file '/etc/init.d/vncserver' do 
@@ -20,7 +15,6 @@ cookbook_file '/etc/init.d/vncserver' do
  owner 'root'
  group 'root'
  mode 00755
- Chef::Log.info('generate init script for linuxvnc servr')
 end 
 
 # https://gist.github.com/dmitriy-kiriyenko/974392
@@ -32,7 +26,6 @@ template '/etc/init.d/Xvfb' do
  owner 'root'
  group 'root'
  mode 00755
- Chef::Log.info('generate init script for xvfb servr')
 end 
 
 # TODO: create a user to run Vnc (not really necessary with Xvfb)
@@ -52,7 +45,6 @@ end
     owner 'root'
     group 'root'
     mode 00755
-    Chef::Log.info('generate #{init_script}')
   end 
 end
 
@@ -68,14 +60,12 @@ remote_file "#{Chef::Config[:file_cache_path]}/selenium.jar" do
   source "#{node['selenium']['selenium']['url']}"
   action :create_if_missing
 # NOTE version !
- Chef::Log.info('downloaded selenium jar '  + node['selenium']['selenium']['url'] + ' into: ' + Chef::Config[:file_cache_path])
 end
 
 remote_file '/root/selenium/selenium.jar' do
   source "#{node['selenium']['selenium']['url']}"
   action :create_if_missing
  # NOTE version !
-  Chef::Log.info('downloaded selenium jar '  + node['selenium']['selenium']['url'] + ' into: ' + '/root/selenium/selenium.jar' )
   owner 'root'
   action :create
 end
@@ -89,21 +79,20 @@ template '/root/selenium/node.json' do
   owner 'root'
   group 'root'
   mode 00644
-  Chef::Log.info('configure node')
 end
  
 # start X window server
 %w{vncserver Xvfb}.each do |service_name|
   service service_name do
     # NOTE: Init replace with Upstart for 14.04
-    unless node[:platform_version].match( /14\./).nil?
-      provider Chef::Provider::Service::Upstart
-    else
-      provider Chef::Provider::Service::Debian
-    end
-    action [:enable, :start]
+    #unless node[:platform_version].match( /14\./).nil?
+    #  provider Chef::Provider::Service::Upstart
+    #else
+    #  provider Chef::Provider::Service::Debian
+    #end
+    action :enable
+    action :start
     supports :status => true, :restart => true
-    Chef::Log.info("started #{service_name}")
   end
 end
 
@@ -111,7 +100,6 @@ end
 remote_file "#{Chef::Config[:file_cache_path]}/log4j.tar.gz" do
   source "#{node['selenium']['log4j']['url']}"
 # NOTE version !
- Chef::Log.info('downloaded selenium jar into: ' + Chef::Config[:file_cache_path])
 end
 
 execute 'extract_log4j' do
@@ -128,23 +116,26 @@ remote_file "Copy_log4j" do
   mode 0755
   not_if { File.exists?('log4j-1.2.17.jar') }
 end
-
+#service 'selenium_hub' do
+#  action :start
+#end
 # start Selenium server and client
 %w{selenium_hub selenium_node}.each do |service_name|
   service service_name do
-    unless node[:platform_version].match( /14\./).nil?
-      provider Chef::Provider::Service::Upstart
-    else
-      provider Chef::Provider::Service::Debian
-    end
-    action [:enable, :start]
+#    unless node[:platform_version].match( /14\./).nil?
+#
+#      provider Chef::Provider::Service::Upstart
+#    else
+#      provider Chef::Provider::Service::Debian
+#    end
+    action :enable
+    action :start
     supports :status => true, :restart => true
     # subscribes :reload, "/etc/init.d/#{service_name}", :immediately
-    Chef::Log.info("started #{service_name}")
   end
 end
 # TODO: optionally start phantomJS
 
 
-
 # ssh -o StrictHostKeyChecking=no username@hostname.com
+

@@ -46,9 +46,15 @@ ntpdate tick.uh.edu
 
   config.vm.provision :chef_solo do |chef|
     chef.data_bags_path = 'data_bags'
+    # suppress running chef recipes by vagrant  for the time
+    # chef.add_recipe 'sample'
+    # chef.add_recipe 'sample'
     chef.add_recipe 'base'
     chef.add_recipe 'java'
-    chef.add_recipe 'selenium'
-    chef.log_level = 'info' 
+    chef.add_recipe 'xvfb'
+    chef.add_recipe 'selenium_hub'
+    chef.add_recipe 'selenium_node'
+#    chef.add_recipe 'selenium'
+    chef.log_level = 'debug' 
   end
 end
