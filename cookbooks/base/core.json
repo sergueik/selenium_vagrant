@@ -1,0 +1,6 @@
+
+ {"run_list" : [ 
+"recipe[base::default]", 
+"recipe[base::ssh]" ,
+"recipe[base::connect]" 
+]}

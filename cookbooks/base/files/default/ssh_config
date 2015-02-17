@@ -1,0 +1,6 @@
+
+# This is the ssh client system-wide configuration file.  
+    SendEnv LANG LC_*
+    HashKnownHosts yes
+    GSSAPIAuthentication yes
+    GSSAPIDelegateCredentials no

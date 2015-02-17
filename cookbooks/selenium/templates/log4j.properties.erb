@@ -1,0 +1,19 @@
+# Root logger option
+log4j.rootLogger=ALL, file,console
+ 
+# Direct log messages to console
+log4j.appender.console=org.apache.log4j.ConsoleAppender
+log4j.appender.console.Target=System.out
+log4j.appender.console.layout=org.apache.log4j.PatternLayout
+log4j.appender.console.layout.ConversionPattern=%d{yyyy-MM-dd HH:mm:ss} %-5p %c{1}:%L - %m%n
+
+log4j.appender.file=org.apache.log4j.FileAppender
+# WARNING: do not use file:// locator here:
+# log4j:ERROR setFile(null,true) call failed.
+# java.io.FileNotFoundException: file:\c:\java\selenium\node.log4j.log 
+# (The filename, directory name, or volume label syntax is incorrect)
+log4j.appender.file.File=c://java//selenium//node.log4j.log
+log4j.appender.file.Append=true
+log4j.appender.file.layout=org.apache.log4j.PatternLayout
+log4j.appender.file.layout.ConversionPattern=%d{yyyy-MM-dd HH:mm:ss,SSS} <%p> <%t> %m%n
+
