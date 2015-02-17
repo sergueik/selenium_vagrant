@@ -1,0 +1,22 @@
+@echo OFF 
+cd %~dp0
+set VAGRANT_HOME=%CD%
+REM set PATH=C:\Program Files\RSA SecurID Token Common;C:\Windows\system32;C:\Windows;C:\Windows\System32\Wbem;C:\Windows\System32\WindowsPowerShell\v1.0\;C:\Program Files\Microsoft Application Virtualization Client;C:\Windows\System32\WindowsPowerShell\v1.0\;C:\Windows\System32\WindowsPowerShell\v1.0\;C:\Program Files\Intel\WiFi\bin\;C:\Program Files\Common Files\Intel\WirelessCommon\;C:\opscode\chef\bin;C:\opscode\chef\embedded\bin;%VAGRANT_HOME%\bin 
+set PATH=%VAGRANT_HOME%\bin;%VAGRANT_HOME%\embedded\bin;%PATH%
+REM This is settings that works for Ruby, but does not work with Vagrant:
+REM set HTTP_PROXY=http://carnival%5Csergueik:password@proxy.carnival.com:8080
+REM Put URL encoded your_domain\your_user:password above 
+REM Could not resolve host: (nil); Host not found
+
+goto :EOF
+ 
+
+vagrant box add centos-6.5-x86 https://atlas.hashicorp.com/chef/boxes/centos-6.5-i386
+https://atlas.hashicorp.com/chef/boxes/centos-6.5-i386
+https://atlas.hashicorp.com/boxes/search?utf8=%E2%9C%93&sort=&provider=&q=centos+6.5
+
+# http://stackoverflow.com/questions/27975541/vagrant-chef-error-in-provision-shared-folders-that-chef-requires-are-missin
+http://www.vagrantbox.es/
+
+
+
