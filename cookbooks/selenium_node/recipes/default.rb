@@ -25,28 +25,28 @@ end
   end 
 end
 
-directory '/root/selenium' do
-  owner 'root'
-  group 'root'
+directory '/home/vncuser/selenium' do
+  owner 'vncuser'
+  group 'vncuser'
   mode  00755
   action :create
 end
 
-remote_file '/root/selenium/selenium.jar' do
+remote_file '/home/vncuser/selenium/selenium.jar' do
   source "#{node['selenium_node']['selenium']['url']}"
   action :create_if_missing
   # NOTE version !
-  owner 'root'
+  owner 'vncuser'
 end
 
-template '/root/selenium/node.json' do
+template '/home/vncuser/selenium/node.json' do
   source 'node.json.erb'
   variables(
      # NOTE: do not use :platform
      :my_platform => node['selenium_node']['my_platform']
   )
-  owner 'root'
-  group 'root'
+  owner 'vncuser'
+  group 'vncuser'
   mode 00644
 end
  

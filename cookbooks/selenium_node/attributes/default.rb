@@ -9,4 +9,5 @@ default['selenium_node']['hub_port'] = '4444'
 default['selenium_node']['node_port'] = '5555'
 default['selenium_node']['node'] = 'LINUX'
 default['selenium_node']['hub_ip'] = '127.0.0.1'
-default['selenium_node']['display_port'] = '99'
+# trying vnc
+default['selenium_node']['display_port'] = '1'

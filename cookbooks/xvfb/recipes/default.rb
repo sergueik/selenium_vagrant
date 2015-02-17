@@ -8,7 +8,7 @@ end
 template '/etc/init.d/Xvfb' do 
  variables(
      # uses attribute of different cookbook
-     :display_port => node['selenium_node']['display_port'] 
+     :display_port => node['xvfb']['display_port'] 
  ) 
  source 'xvfb.erb'
  owner 'root'

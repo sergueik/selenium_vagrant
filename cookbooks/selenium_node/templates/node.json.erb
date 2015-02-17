@@ -7,21 +7,15 @@
       "maxInstances": 1
     },
     {
-      "browserName": "internet explorer",
-      "version": "",
-      "platform": "<%= @my_platform %>",
-      "maxInstances": 1
-    },
-    {
       "browserName": "firefox",
       "version": "",
       "platform": "<%= @my_platform %>",
-      "maxInstances": 1
+      "maxInstances": 5
     }
   ],
   "configuration": {
     "role": "node",
-    "maxSession": 1,
+    "maxSession": 5,
     "nodeTimeout": 12000,
     "nodePolling": 2000,
     "registerCycle": 1000,

@@ -1,0 +1,82 @@
+#! /bin/sh
+################################################################################
+#
+# Copyright (c) 2013 IBM Corporation and other Contributors
+#
+# All rights reserved. This program and the accompanying materials
+# are made available under the terms of the Eclipse Public License v1.0
+# which accompanies this distribution, and is available at
+# http://www.eclipse.org/legal/epl-v10.html
+#
+# Contributors:
+#     IBM - initial implementation
+#
+################################################################################
+### BEGIN INIT INFO
+# Provides:          VNC Server 
+# Required-Start:    $remote_fs $syslog
+# Required-Stop:     $remote_fs $syslog
+# Default-Start:     2 3 4 5
+# Default-Stop:      0 1 6
+# Short-Description: Manages the VNC Server
+# Description:       Manages the VNC Server
+#                    
+### END INIT INFO
+
+# Variables for this template:
+# user_name:  name of the user under which the VNC server is to be run
+# display:    number of the display that the VNC server offers
+# depth:      bit depth of the display
+# geometry:   size of the display (width x height)
+
+export USER=<%= @user_name %>
+DISPLAY=<%= @display %>
+DEPTH=<%= @depth %>
+GEOMETRY=<%= @geometry %>
+OPTIONS="-depth ${DEPTH} -geometry ${GEOMETRY} :${DISPLAY}"
+. /lib/lsb/init-functions
+
+#
+# Function that starts the daemon/service
+#
+do_start()
+{
+	log_action_begin_msg "Starting vncserver for user '${USER}' on localhost:${DISPLAY}"
+	sudo su - ${USER} -c "/usr/bin/vncserver ${OPTIONS}"
+	return "0"
+}
+
+#
+# Function that stops the daemon/service
+#
+do_stop()
+{
+	log_action_begin_msg "Stopping vncserver for user '${USER}' on localhost:${DISPLAY}"
+	sudo su - ${USER} -c "/usr/bin/vncserver -kill :${DISPLAY}"
+	return "0"
+}
+
+#
+# Perform the required service function
+#
+case "$1" in
+  start)
+	do_start
+	;;
+  stop)
+	do_stop
+	;;
+  restart|force-reload)
+	$0 stop
+	$0 start
+	;;      
+  reload)
+	echo "Warning - reload does nothing"
+	exit 3
+	;;
+  *)
+	echo "Usage: $0 {start|stop|restart|reload}"
+	exit 1
+	;;
+esac
+:

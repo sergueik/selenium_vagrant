@@ -15,18 +15,18 @@
   end 
 end
 
-directory '/root/selenium' do
-  owner 'root'
-  group 'root'
+directory '/home/vncuser/selenium' do
+  owner 'vncuser'
+  group 'vncuser'
   mode  00755
   action :create
 end
 
-remote_file '/root/selenium/selenium.jar' do
+remote_file '/home/vncuser/selenium/selenium.jar' do
   source "#{node['selenium_node']['selenium']['url']}"
   action :create_if_missing
  # NOTE version !
-  owner 'root'
+  owner 'vncuser'
 end
 
 # http://www.apache.org/dyn/closer.cgi/logging/log4j/1.2.17/log4j-1.2.17.tar.gz
@@ -37,15 +37,15 @@ end
 
 execute 'extract_log4j' do
   command 'tar xzvf ' + "#{Chef::Config[:file_cache_path]}/log4j.tar.gz" 
-  cwd '/root/selenium'
+  cwd '/home/vncuser/selenium'
   not_if { File.exists?('log4j-1.2.17.jar') }
 end
 
 remote_file "Copy_log4j" do 
-  path "/root/selenium/log4j-1.2.17.jar" 
-  source "file:///root/selenium/apache-log4j-1.2.17/log4j-1.2.17.jar"
-  owner 'root'
-  group 'root'
+  path "/home/vncuser/selenium/log4j-1.2.17.jar" 
+  source "file:///home/vncuser/selenium/apache-log4j-1.2.17/log4j-1.2.17.jar"
+  owner 'vncuser'
+  group 'vncuser'
   mode 0755
   not_if { File.exists?('log4j-1.2.17.jar') }
 end

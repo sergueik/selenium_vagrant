@@ -40,21 +40,22 @@ fi
 ntpdate tick.uh.edu
   SCRIPT
   config.vm.network 'forwarded_port', guest: 4444,  host: 4444
+  config.vm.network 'forwarded_port', guest: 5901,  host: 5901
   config.vm.host_name = 'chef-book'
   # comment execution shell provisioner before the chef takes over
   # config.vm.provision :shell, :inline => $script
-
+config.vm.provider "virtualbox" do |v|
+  v.memory = 1024
+  v.cpus = 1
+end
   config.vm.provision :chef_solo do |chef|
     chef.data_bags_path = 'data_bags'
-    # suppress running chef recipes by vagrant  for the time
-    # chef.add_recipe 'sample'
-    # chef.add_recipe 'sample'
     chef.add_recipe 'base'
     chef.add_recipe 'java'
     chef.add_recipe 'xvfb'
     chef.add_recipe 'selenium_hub'
     chef.add_recipe 'selenium_node'
-#    chef.add_recipe 'selenium'
+    chef.add_recipe 'vnc'
     chef.log_level = 'debug' 
   end
 end
