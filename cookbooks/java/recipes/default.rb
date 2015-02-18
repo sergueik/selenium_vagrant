@@ -1,3 +1,6 @@
+# TODO : 
+# https://www.chef.io/blog/2013/12/03/doing-wrapper-cookbooks-right/#
+# include_recipe 'java'
 #
 # Author:: Seth Chisamore (<schisamo@opscode.com>)
 # Cookbook Name:: java

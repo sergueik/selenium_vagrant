@@ -53,9 +53,10 @@ end
     chef.add_recipe 'base'
     chef.add_recipe 'java'
     chef.add_recipe 'xvfb'
+	    chef.add_recipe 'vnc'
     chef.add_recipe 'selenium_hub'
     chef.add_recipe 'selenium_node'
-    chef.add_recipe 'vnc'
+
     chef.log_level = 'debug' 
   end
 end

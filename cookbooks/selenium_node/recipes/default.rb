@@ -1,9 +1,10 @@
-%w(firefox).each do |package_name| 
-  package package_name do
-    action :install
-  end
+# Install Firefox
+package 'Install Firefox' do
+  package_name 'firefox'
+  action :install
 end
-# TODO : the suggeston did not help:
+
+# TODO : RANDR warning 
 # http://stackoverflow.com/questions/12644001/how-to-add-the-missing-randr-extension
 
 # TODO - generate profile directories

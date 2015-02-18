@@ -19,6 +19,7 @@ directory '/home/vncuser/selenium' do
   owner 'vncuser'
   group 'vncuser'
   mode  00755
+  recursive true
   action :create
 end
 
