@@ -9,6 +9,8 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
 config.vm.box_url = 'http://files.vagrantup.com/precise64.box' 
 config.vm.box = 'hashicorp/precise64'
 
+# TODO : ubuntu/trusty32
+# vagrant up ubuntu/trusty32 --provider virtualbox
 $script = <<-SCRIPT
 
 # Install chef via vagrant 
@@ -51,7 +53,8 @@ end
   config.vm.provision :chef_solo do |chef|
     chef.data_bags_path = 'data_bags'
     chef.add_recipe 'base'
-    chef.add_recipe 'java'
+   chef.add_recipe 'wrapper_java'
+ #   chef.add_recipe 'java'
     chef.add_recipe 'xvfb'
 	    chef.add_recipe 'vnc'
     chef.add_recipe 'selenium_hub'
