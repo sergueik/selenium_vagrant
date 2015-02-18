@@ -53,13 +53,16 @@ end
   config.vm.provision :chef_solo do |chef|
     chef.data_bags_path = 'data_bags'
     chef.add_recipe 'base'
-   chef.add_recipe 'wrapper_java'
- #   chef.add_recipe 'java'
+    chef.add_recipe 'wrapper_java'
+    # chef.add_recipe 'java'
+    # Still need to download cookbook from https://supermarket.chef.io/cookbooks/java/versions/1.7.0 even w/o forking 
+    # ERROR: Cookbook java not found.
+    # TODO : Be rkshelf 
     chef.add_recipe 'xvfb'
 	    chef.add_recipe 'vnc'
     chef.add_recipe 'selenium_hub'
     chef.add_recipe 'selenium_node'
 
-    chef.log_level = 'debug' 
+    chef.log_level = 'info' 
   end
 end
