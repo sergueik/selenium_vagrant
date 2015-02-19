@@ -4,12 +4,17 @@ end
 
 # Define variables for attributes
 account_username = node['vnc']['account_username'];
+account_home     = "/home/#{account_username}";
+jar_filename = 'log4j-1.2.17.jar'
+tarball_filename= 'log4j.tar.gz'
+tarball_filepath = "#{Chef::Config['file_cache_path']}/#{tarball_filename}"
+selenium_home = "#{account_home}/selenium"
 
-# Create a selenium hub service script.
-# https://github.com/esycat/selenium-grid-init
+
+# Create selenium hub service script.
 %w{selenium_hub}.each do |init_script| 
   template ("/etc/init.d/#{init_script}") do 
-    source"#{init_script}.erb"
+    source "#{init_script}.erb"
     variables(
         :user_name => account_username,
 	:hub_port => node['selenium_node']['hub_port'], 
@@ -25,7 +30,7 @@ account_username = node['vnc']['account_username'];
 end
 
 # Create selenium folder
-directory '/home/vncuser/selenium' do
+directory "#{account_home}/selenium" do
   owner account_username 
   group account_username 
   mode  00755
@@ -34,32 +39,33 @@ directory '/home/vncuser/selenium' do
 end
 
 # Install selenium jar
-remote_file '/home/vncuser/selenium/selenium.jar' do
+remote_file "#{account_home}/selenium/selenium.jar" do
   source node['selenium_node']['selenium']['url']
   action :create_if_missing
  # TODO version !
   owner account_username 
 end
 
-# http://www.apache.org/dyn/closer.cgi/logging/log4j/1.2.17/log4j-1.2.17.tar.gz
-remote_file "#{Chef::Config[:file_cache_path]}/log4j.tar.gz" do
+# Download tarball
+remote_file tarball_filepath do
   source node['selenium_node']['log4j']['url']
-# NOTE version !
+  owner 'root'
+  group 'root'
+  mode 00644
 end
 
-execute 'extract_log4j' do
-  command 'tar xzvf ' + "#{Chef::Config[:file_cache_path]}/log4j.tar.gz" 
-  cwd '/home/vncuser/selenium'
-  not_if { File.exists?('log4j-1.2.17.jar') }
-end
+# Extract and place the jar 
+bash 'extract_jar' do
+  cwd ::File.dirname(selenium_home)
+  code <<-EOH
+    
+    tar xzf #{tarball_filepath} -C #{selenium_home}
+    pushd #{selenium_home}
+    mv */#{jar_filename} .
+    chown #{account_username}:#{account_username} #{jar_filename}
 
-remote_file "Copy_log4j" do 
-  path "/home/vncuser/selenium/log4j-1.2.17.jar" 
-  source "file:///home/vncuser/selenium/apache-log4j-1.2.17/log4j-1.2.17.jar"
-  owner account_username
-  group account_username 
-  mode 00755
-  not_if { File.exists?('log4j-1.2.17.jar') }
+    EOH
+  not_if { ::File.exists?("#{selenium_home}/#{jar_filename}") }
 end
 
 # start the service 

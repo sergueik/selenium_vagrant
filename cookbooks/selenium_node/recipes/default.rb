@@ -4,6 +4,7 @@ end
 
 # Define variables for attributes
 account_username = node['vnc']['account_username'];
+account_home     = "/home/#{account_username}";
 
 # Install Firefox
 package 'Install Firefox' do
@@ -13,11 +14,10 @@ end
 
 # TODO - generate profile directories
 
-# Create a selenium node service script.
-# https://github.com/esycat/selenium-grid-init
+# Create selenium node service script.
 %w{selenium_node}.each do |init_script| 
   template ("/etc/init.d/#{init_script}") do 
-    source"#{init_script}.erb"
+    source "#{init_script}.erb"
     variables(
         :user_name => account_username,
 	:hub_port => node['selenium_node']['hub_port'], 
@@ -32,21 +32,22 @@ end
   end 
 end
 
-directory '/home/vncuser/selenium' do
+directory "#{account_home}/selenium" do
   owner account_username
   group account_username
   mode  00755
+  recursive true
   action :create
 end
 
-remote_file '/home/vncuser/selenium/selenium.jar' do
+remote_file "#{account_home}/selenium/selenium.jar" do
   source node['selenium_node']['selenium']['url']
   action :create_if_missing
   # NOTE version !
   owner account_username
 end
 
-template '/home/vncuser/selenium/node.json' do
+template "#{account_home}/selenium/node.json" do
   source 'node.json.erb'
   variables(
      # NOTE: do not use :platform
