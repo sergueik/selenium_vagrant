@@ -1,0 +1,10 @@
+work/
+target/
+test-output/
+.classpath
+.settings/
+.vagrant/
+.chef
+.project
+**/*~
+**/*.swp

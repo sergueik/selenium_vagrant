@@ -19,7 +19,7 @@
 ################################################################################
 
 
-log "Installing VNC Server, desktop and browser" do
+log 'Installing VNC Server and desktop' do
   level :info
 end
 
@@ -31,13 +31,13 @@ account_home     = "/home/#{account_username}";
 password_file    = "#{account_home}/.vnc/passwd";
 
 # Ensure apt-get is updated before running the script
-execute "apt-get-update" do
-  command "apt-get update"
+execute 'apt-get-update' do
+  command 'apt-get update'
   ignore_failure true
 end
 
 # Install xorg
-package "Install xorg" do
+package 'Install xorg' do
   package_name 'xorg'
 end
 
@@ -60,7 +60,7 @@ user "Create user #{account_username} to be used for running VNC and the desktop
   username "#{account_username}"
 end
 
-# Add user to the sudo group.
+# Add user to the sudoers group.
 group 'sudo' do
   members "#{account_username}"
   action :modify
@@ -78,41 +78,31 @@ end
 
 # TODO: Copy / produce  the .Xauthority
 
-# Ensure ownership of the VNC password file
-cookbook_file "#{password_file}" do
-  source 'passwd'
+# Ensure presence and ownership of the VNC password file
+file "#{password_file}" do
   user "#{account_username}"
   user "#{account_username}"
-  action :create_if_missing
+  action :touch
   mode 00600
 end
 
-# Set VNC password for the user.
-# Currently done manually after this recipe is complete when starting the vncserver service 
-execute 'Create VNC password file' do
+# Generate VNC password for the user.
+execute 'Generate VNC password' do
   user "#{account_username}"
   command "echo #{vnc_password}| /usr/bin/vncpasswd -f > #{password_file}" 
 end
 
-#
-# Ensure ownership of the passwd file
-# execute "Ensure ownership of the VNC password file #{password_file}" do
-#  user "#{account_username}"
-#  command "chown #{account_username}:#{account_username} #{password_file} && chmod 0600 #{password_file}" 
-# end
-
-
 # Create a vncserver service script.
-template "/etc/init.d/vncserver" do
-  source "VNCService.erb"
-  mode "0775"
-  owner "root"
-  group "root"
+template '/etc/init.d/vncserver' do
+  source 'VNCService.erb'
+  mode 00775
+  owner 'root'
+  group 'root'
   variables({
              :user_name	=> "#{account_username}",
-             :display	=> "1",
+             :display	=> '1',
              :geometry	=> "#{geometry}",
-             :depth	=> "16"
+             :depth	=> '16'
            })
 end
 
@@ -121,23 +111,22 @@ file "#{account_home}/.vnc/xstartup" do
   user "#{account_username}"
   group "#{account_username}"
   action :create
-  mode "0755"
-  content  "#!/bin/sh
+  mode 00755
+  content  <<-FILE
+#!/bin/sh
 [ -r $HOME/.Xresources ] && xrdb $HOME/.Xresources
 xsetroot -solid grey
 /usr/bin/startlxde
-"
+  FILE
 end
 
 # Enable the VNC server service
-# Starting of the service needs to be done manually after the recipe is complete.
-#  action [:enable, :start]
-service "vncserver" do
+service 'vncserver' do
   supports :restart => true
   ignore_failure false
   action [:start, :enable]
 end
 
-log "Finished configuring VNC server.  Now SSH to the server as root and run \"service vncserver start\"" do
+log 'Finished configuring VNC server.' do
   level :info
 end

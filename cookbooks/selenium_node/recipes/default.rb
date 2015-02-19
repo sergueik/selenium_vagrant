@@ -1,19 +1,25 @@
+log 'Installing Selenium node' do
+  level :info
+end
+
+# Define variables for attributes
+account_username = node['vnc']['account_username'];
+
 # Install Firefox
 package 'Install Firefox' do
   package_name 'firefox'
   action :install
 end
 
-# TODO : RANDR warning 
-# http://stackoverflow.com/questions/12644001/how-to-add-the-missing-randr-extension
-
 # TODO - generate profile directories
 
+# Create a selenium node service script.
 # https://github.com/esycat/selenium-grid-init
 %w{selenium_node}.each do |init_script| 
   template ("/etc/init.d/#{init_script}") do 
     source"#{init_script}.erb"
     variables(
+        :user_name => account_username,
 	:hub_port => node['selenium_node']['hub_port'], 
 	:node_port => node['selenium_node']['node_port'],
 	:node => node['selenium_node']['node'] ,
@@ -27,17 +33,17 @@ end
 end
 
 directory '/home/vncuser/selenium' do
-  owner 'vncuser'
-  group 'vncuser'
+  owner account_username
+  group account_username
   mode  00755
   action :create
 end
 
 remote_file '/home/vncuser/selenium/selenium.jar' do
-  source "#{node['selenium_node']['selenium']['url']}"
+  source node['selenium_node']['selenium']['url']
   action :create_if_missing
   # NOTE version !
-  owner 'vncuser'
+  owner account_username
 end
 
 template '/home/vncuser/selenium/node.json' do
@@ -46,12 +52,12 @@ template '/home/vncuser/selenium/node.json' do
      # NOTE: do not use :platform
      :my_platform => node['selenium_node']['my_platform']
   )
-  owner 'vncuser'
-  group 'vncuser'
+  owner account_username
+  group account_username
   mode 00644
 end
  
-# start Selenium server and client
+# Start Selenium server and client
 %w{selenium_node}.each do |service_name|
   service service_name do
     unless node[:platform_version].match( /14\./).nil?
@@ -59,9 +65,12 @@ end
     else
       provider Chef::Provider::Service::Debian
     end
-    action :enable
-    action :start
+    action [:enable, :start]
     supports :status => true, :restart => true
-    # subscribes :reload, "/etc/init.d/#{service_name}", :immediately
+    subscribes :reload, "/etc/init.d/#{service_name}", :immediately
   end
+end
+
+log 'Finished configuring Selenium node.' do
+  level :info
 end
