@@ -34,4 +34,3 @@ end
 log 'Finished configuring Xvfb server.' do
   level :info
 end
-

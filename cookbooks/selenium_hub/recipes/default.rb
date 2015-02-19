@@ -9,7 +9,7 @@ jar_filename = 'log4j-1.2.17.jar'
 tarball_filename= 'log4j.tar.gz'
 tarball_filepath = "#{Chef::Config['file_cache_path']}/#{tarball_filename}"
 selenium_home = "#{account_home}/selenium"
-
+log4j_properties_file = 'hub.log4j.properties'
 
 # Create selenium hub service script.
 %w{selenium_hub}.each do |init_script| 
@@ -66,6 +66,16 @@ bash 'extract_jar' do
 
     EOH
   not_if { ::File.exists?("#{selenium_home}/#{jar_filename}") }
+end
+
+
+# Create log4j properties
+cookbook_file "#{selenium_home}/#{log4j_properties_file}" do
+  source log4j_properties_file
+  user "#{account_username}"
+  user "#{account_username}"
+  action :create_if_missing
+  mode 00600
 end
 
 # start the service 

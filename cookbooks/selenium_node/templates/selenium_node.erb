@@ -31,6 +31,9 @@ COMMAND="$1"
 # TODO: process when JAVA_HOME not ser
 export JAVA_HOME='/usr/bin'
 SELENIUM_ARGS=`cat<<END_ARGS
+-classpath ${SELENIUM_HOME}/log4j-1.2.17.jar:${SELENIUM_HOME}/selenium.jar \
+-Dlog4j.configuration=file:${SELENIUM_HOME}/node.log4j.properties \
+org.openqa.grid.selenium.GridLauncher \
 -role $ROLE \
 -port $NODE_PORT \
 -hub http://${HUB_IP_ADDRESS}:${HUB_PORT}/hub/register \
@@ -44,8 +47,8 @@ export SELENIUM_ARGS
 [ -r "$DEFAULTS" ] && . "$DEFAULTS"
 . /lib/init/vars.sh
 . /lib/lsb/init-functions
-DAEMON_ARGS="--name $ROLE --quiet --pidfile $PIDFILE --user $SELENIUM_USER"
-DAEMON_CMD="/usr/bin/java -- $JVM_ARGS -jar ${SELENIUM_HOME}/selenium.jar ${SELENIUM_ARGS}"
+DAEMON_ARGS="--chdir ${SELENIUM_HOME} --quiet --pidfile ${PIDFILE} --user ${SELENIUM_USER}"
+DAEMON_CMD="/usr/bin/java -- $JVM_ARGS ${SELENIUM_ARGS}"
 if [ "$DEBUG" != "" ]  
 then
   echo $DAEMON_CMD

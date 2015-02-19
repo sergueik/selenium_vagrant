@@ -1,5 +1,3 @@
-################################################################################
-#
 # Copyright (c) 2013 IBM Corporation and other Contributors
 #
 # All rights reserved. This program and the accompanying materials
@@ -130,3 +128,4 @@ end
 log 'Finished configuring VNC server.' do
   level :info
 end
+

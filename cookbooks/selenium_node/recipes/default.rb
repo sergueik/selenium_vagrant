@@ -5,6 +5,8 @@ end
 # Define variables for attributes
 account_username = node['vnc']['account_username'];
 account_home     = "/home/#{account_username}";
+selenium_home = "#{account_home}/selenium"
+log4j_properties_file = 'node.log4j.properties'
 
 # Install Firefox
 package 'Install Firefox' do
@@ -72,6 +74,16 @@ end
   end
 end
 
+# Create log4j properties
+cookbook_file "#{selenium_home}/#{log4j_properties_file}" do
+  source log4j_properties_file
+  owner account_username
+  group account_username
+  action :create_if_missing
+  mode 00600
+end
+
 log 'Finished configuring Selenium node.' do
   level :info
 end
+
