@@ -7,6 +7,8 @@ account_username = node['vnc']['account_username'];
 account_home     = "/home/#{account_username}";
 selenium_home = "#{account_home}/selenium"
 log4j_properties_file = 'node.log4j.properties'
+logfile = 'node.log'
+logger = 'INFO'
 
 # Install Firefox
 package 'Install Firefox' do
@@ -19,9 +21,11 @@ end
 # Create selenium node service script.
 %w{selenium_node}.each do |init_script| 
   template ("/etc/init.d/#{init_script}") do 
-    source "#{init_script}.erb"
+    source 'initscript.erb'
     variables(
         :user_name => account_username,
+	:selenium_home => selenium_home,
+        :log4j_properties_file =>log4j_properties_file ,
 	:hub_port => node['selenium_node']['hub_port'], 
 	:node_port => node['selenium_node']['node_port'],
 	:node => node['selenium_node']['node'] ,
@@ -68,15 +72,20 @@ end
     else
       provider Chef::Provider::Service::Debian
     end
-    action [:enable, :start]
+    action [:enable,:start]
     supports :status => true, :restart => true
     subscribes :reload, "/etc/init.d/#{service_name}", :immediately
   end
 end
 
 # Create log4j properties
-cookbook_file "#{selenium_home}/#{log4j_properties_file}" do
-  source log4j_properties_file
+template "#{selenium_home}/#{log4j_properties_file}" do
+  source 'log4j_properties.erb'
+  variables(
+     # NOTE: do not use :platform
+     :logger => logger,
+     :logfile => logfile
+  )
   owner account_username
   group account_username
   action :create_if_missing
