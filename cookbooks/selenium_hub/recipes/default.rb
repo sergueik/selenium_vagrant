@@ -5,16 +5,13 @@ end
 # Define variables for attributes
 account_username = node['vnc']['account_username'];
 account_home     = "/home/#{account_username}";
-jar_filename = 'log4j-1.2.17.jar'
-tarball_filename= 'log4j.tar.gz'
-tarball_filepath = "#{Chef::Config['file_cache_path']}/#{tarball_filename}"
 selenium_home = "#{account_home}/selenium"
 log4j_properties_file = 'hub.log4j.properties'
 
 # Create selenium hub service script.
 %w{selenium_hub}.each do |init_script| 
   template ("/etc/init.d/#{init_script}") do 
-    source "#{init_script}.erb"
+    source 'initscript.erb'
     variables(
         :user_name => account_username,
 	:hub_port => node['selenium_node']['hub_port'], 
@@ -46,39 +43,20 @@ remote_file "#{account_home}/selenium/selenium.jar" do
   owner account_username 
 end
 
-# Download tarball
-remote_file tarball_filepath do
-  source node['selenium_node']['log4j']['url']
-  owner 'root'
-  group 'root'
-  mode 00644
-end
-
-# Extract and place the jar 
-bash 'extract_jar' do
-  cwd ::File.dirname(selenium_home)
-  code <<-EOH
-    
-    tar xzf #{tarball_filepath} -C #{selenium_home}
-    pushd #{selenium_home}
-    mv */#{jar_filename} .
-    chown #{account_username}:#{account_username} #{jar_filename}
-
-    EOH
-  not_if { ::File.exists?("#{selenium_home}/#{jar_filename}") }
-end
-
-
 # Create log4j properties
-cookbook_file "#{selenium_home}/#{log4j_properties_file}" do
-  source log4j_properties_file
+template  "#{selenium_home}/#{log4j_properties_file}" do
+  source 'log4j.properties.erb'
+      variables(
+        :logger =>  node['selenium_hub']['logger'] || 'INFO',
+	:logfile => node['selenium_hub']['logfile'] || 'hub.log'
+    ) 
   user "#{account_username}"
   user "#{account_username}"
   action :create_if_missing
   mode 00600
 end
 
-# start the service 
+# Start the service 
 %w{selenium_hub}.each do |service_name|
   service service_name do
     # NOTE: Init replace with Upstart for 14.04
@@ -93,6 +71,8 @@ end
     subscribes :reload, "/etc/init.d/#{service_name}", :immediately
   end
 end
+
+# http://www.devopsnotes.com/2012/02/how-to-write-good-chef-cookbook.html
 
 log 'Finished configuring Selenium hub.' do
   level :info

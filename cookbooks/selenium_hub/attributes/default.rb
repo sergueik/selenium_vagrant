@@ -1,10 +1,8 @@
-default['selenium_hub']['display_driver']['install_flavor'] = 'xvfb'
+default['selenium_hub']['display_driver']['install_flavor'] = 'vncserver' # currently unused
 default['selenium_hub']['my_platform'] = 'LINUX'
 default['selenium_hub']['selenium']['version'] = '2.44.0'
 default['selenium_hub']['selenium']['url'] = \
 'http://selenium-release.storage.googleapis.com/2.44/selenium-server-standalone-2.44.0.jar'
-default['selenium_hub']['log4j']['version'] = '1.2.17'
-default['selenium_hub']['log4j']['url'] = 'http://apache.mirrors.pair.com/logging/log4j/1.2.17/log4j-1.2.17.tar.gz'
 default['selenium_hub']['hub_port'] = '4444'
 default['selenium_hub']['node_port'] = '5555'
 default['selenium_hub']['node'] = 'LINUX'
