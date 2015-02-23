@@ -79,8 +79,8 @@ end
 # Ensure presence and ownership of the VNC password file
 file "#{password_file}" do
   user "#{account_username}"
-  user "#{account_username}"
-  action :touch
+  group "#{account_username}"
+  action :create
   mode 00600
 end
 
@@ -88,6 +88,7 @@ end
 execute 'Generate VNC password' do
   user "#{account_username}"
   command "echo #{vnc_password}| /usr/bin/vncpasswd -f > #{password_file}" 
+  # not_if ::File.exists? password_file
 end
 
 # Create a vncserver service script.
