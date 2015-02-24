@@ -21,11 +21,13 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
   end
   config.vm.provision :chef_solo do |chef|
     chef.data_bags_path = 'data_bags'
+    chef.add_recipe 'base'
     chef.add_recipe 'wrapper_java'
     chef.add_recipe 'xvfb'
     chef.add_recipe 'vnc'
     chef.add_recipe 'selenium_hub'
     chef.add_recipe 'selenium_node'
+    chef.add_recipe 'databag_manager'
     chef.log_level = 'info' 
   end
 end
