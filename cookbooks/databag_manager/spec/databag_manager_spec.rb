@@ -11,7 +11,7 @@ describe 'databag_manager::default' do
     @seedvalue = 12345
     @dbweb = 'xxxx'
     @dbdwh = 'yyy'
-    @rpm_version = 42
+    @rpm_version = '42'
     @application_server = 'hal-giftsf-server'
     @server_config_databag = 'spec_tomcat_app_config'
     @user_account = nil
@@ -21,6 +21,11 @@ describe 'databag_manager::default' do
     @jmx_port = nil
     @ajp_port = nil
     @shutdown_port = nil
+    @Xmx = nil
+    @Xms = nil
+    @PermSize = nil
+    @MaxPermSize = nil
+
 
     stub_data_bag(@vault_databag).and_return(
         {
@@ -29,20 +34,28 @@ describe 'databag_manager::default' do
         }
     )
     stub_data_bag_item(@server_config_databag, @application_server).and_return(
-        {'spec' => {
-            'application' => {
-                'user' => @user_account,
-                'group' => @group_account,
-                'rpm_version' => @rpm_version,
-                'ports' => { 
-                            'http' => @http_port,
-                            'http' => @http_port,
-                            'https' => @https_port,
-                            'jmx' => @http_port,
-                            'ajp' => @ajp_port,
-                            'shutdown' => @shutdown_port
-                            }
-	        }
+        {
+            'spec' => {
+                'application' => {
+                    'user' => @user_account,
+                    'group' => @group_account,
+                    'rpm_version' => @rpm_version,
+                    'ports' => {
+                        'http' => @http_port,
+                        'http' => @http_port,
+                        'https' => @https_port,
+                        'jmx' => @http_port,
+                        'ajp' => @ajp_port,
+                        'shutdown' => @shutdown_port
+                    },
+                    'spring_profiles_active' => true,
+                    'memory' => {
+                        'Xms' => @Xms,
+                        'Xmx' => @Xmx,
+                        'PermSize' => @PermSize,
+                        'MaxPermSize' => @MaxPermSize
+                    }
+                }
             }
         }
     )
