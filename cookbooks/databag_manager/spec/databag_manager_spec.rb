@@ -12,7 +12,7 @@ describe 'databag_manager::default' do
     @dbweb = 'xxxx'
     @dbdwh = 'yyy'
     @rpm_version = '42'
-    @application_server = 'hal-giftsf-server'
+    @package_name = @application_server = 'hal-giftsf-server'
     @server_config_databag = 'spec_tomcat_app_config'
     @user_account = nil
     @group_account = nil
@@ -25,6 +25,12 @@ describe 'databag_manager::default' do
     @Xms = nil
     @PermSize = nil
     @MaxPermSize = nil
+    @setenv_file = "/etc/#{@application_server}/setenv.sh"
+
+
+    @logging_base_dir = nil
+    @keystore_location  = nil
+    @keystore_password = nil
 
 
     stub_data_bag(@vault_databag).and_return(
@@ -85,6 +91,10 @@ describe 'databag_manager::default' do
                                     {
                                         'dbdwh' => @dbdwh
                                     })
+      # Stub node parameters hidden in erb template
+      node.set[:keystore][:location]  = @keystore_location 
+      node.set[:keystore][:password]  = @keystore_password
+      node.set[:logging_base_dir]  = @logging_base_dir   
 
     end.converge(described_recipe)
   end
@@ -100,6 +110,27 @@ describe 'databag_manager::default' do
     expect(chef_run).to write_log(/#{@user_account}/)
     expect(chef_run).to write_log(/#{@group_account}/)
     expect(chef_run).to write_log(/#{@rpm_version}/)
+  end
+
+  it 'installs service package' do
+    expect(chef_run).to install_yum_package(@package_name)
+  end
+
+  xit 'writes setenv configuration file' do
+    expect(chef_run).to create_file(@setenv_file).with(
+                            user: @user_account,
+                            group: @group_account,
+                            mode: 00644
+                        )
+  end
+
+  it 'generates a valid setenv content' do
+    expect(chef_run).to render_file(@setenv_file).with_content(/^JAVA_OPTS=.*/)
+  end
+
+  it 'notifies service' do
+    resource = chef_run.file(@setenv_file)
+    expect(resource).to_not notify("service['#{@application_server}']").to(:restart).delayed
   end
 
 end

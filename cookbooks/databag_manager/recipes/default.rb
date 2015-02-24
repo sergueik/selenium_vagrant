@@ -32,6 +32,9 @@ rpm_version = application['rpm_version']
 user_account = application['user']
 group_account = application['group']
 
+chef_gem 'chef-vault' do 
+action :install
+end
 
 log "seedvalue=#{seedvalue}" do
   level :info
@@ -68,6 +71,7 @@ service service_name do
 end
 
 template "/etc/#{service_name}/setenv.sh" do
+  Chef::Log.info("written /etc/#{service_name}/setenv.sh")
   source 'setenv.sh.erb'
   owner user_account
   group group_account
@@ -85,7 +89,6 @@ template "/etc/#{service_name}/setenv.sh" do
       :MaxPermSize => application['memory']['MaxPermSize'],
       :seedvalue => seedvalue
   )
+  action :create
   notifies :restart, "service[#{service_name}]"
 end
-
-

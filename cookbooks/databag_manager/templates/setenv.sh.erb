@@ -1,0 +1,9 @@
+JAVA_OPTS="-Dtomcat.http.port=<%= @http_port %> -Dtomcat.https.port=<%= @https_port %> -Dtomcat.shutdown.port=<%= @shutdown_port %> -Dtomcat.ajp.port=<%= @ajp_port %> -Dtomcat.https.keystore=<%= node[:keystore][:location] %> -Dtomcat.https.keypass=<%= node[:keystore][:password] %> -DappLogging.basedir=<%= node[:logging_base_dir] %> -Dspring.profiles.active=<%= @spring_profiles_active %> -Xms<%= @Xms %> -Xmx<%= @Xmx %> -XX:PermSize=<%= @PermSize %> -XX:MaxPermSize=<%= @MaxPermSize %>"
+
+<% unless @seedvalue == '' %>
+JAVA_OPTS="$JAVA_OPTS  -Dhal.config.pwd='<%= @seedvalue %>'"
+<% end %>
+
+export JAVA_OPTS
+
+
