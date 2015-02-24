@@ -1,0 +1,40 @@
+name: hal-chip
+
+dbweb {
+    driverClassName: "<%= @dbweb_driverClassName %>"
+    url: "<%= @dbweb_url %>"
+    username: <%= @dbweb_username %>
+    password: <%= @dbweb_password %>
+}
+
+dbdwh {
+    driverClassName: "<%= @dbdwh_driverClassName %>"
+    url: "<%= @dbdwh_url %>"
+    username: <%= @dbdwh_username %>
+    password: <%= @dbdwh_password %>
+}
+
+polar {
+    hal {
+        user: "<%= @polar_hal_username %>",
+        pwd: "<%= @polar_hal_password %>",
+        url: "<%= @polar_hal_url %>"
+    }
+    sbn {
+        user: "<%= @sbn_hal_username %>",
+        pwd: "<%= @sbn_hal_password %>",
+        url: "<%= @sbn_hal_url %>"
+    }
+
+    loadCabinMetadata: <%= @polar_load_cabin_metadata %>
+    dataLocation: <%= @polar_cabin_metadata_location %>
+    cabin {
+        maxNumCabins: 10
+    }
+}
+
+hal {
+    cms {
+        url: "<%= @cms_url %>"
+    }
+}

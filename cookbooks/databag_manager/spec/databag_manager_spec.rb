@@ -9,8 +9,20 @@ describe 'databag_manager::default' do
     @environment = 'spec'
     @vault_databag = 'spec-vault'
     @seedvalue = 12345
-    @dbweb = 'xxxx'
-    @dbdwh = 'yyy'
+    @dbweb = {
+        'dbweb_username' => nil ,
+        'dbweb_password' => nil 
+    }
+    @dbdwh = {
+        'dbweb_username' => nil ,
+        'dbweb_password' => nil 
+    }
+    @polar = {
+        'hal_username' => nil ,
+        'hal_password' => nil ,
+'sbn_username'=>nil,
+'sbn_password'=>nil
+    }
     @rpm_version = '42'
     @package_name = @application_server = 'hal-giftsf-server'
     @server_config_databag = 'spec_tomcat_app_config'
@@ -26,13 +38,11 @@ describe 'databag_manager::default' do
     @PermSize = nil
     @MaxPermSize = nil
     @setenv_file = "/etc/#{@application_server}/setenv.sh"
-
-
     @logging_base_dir = nil
     @keystore_location  = nil
     @keystore_password = nil
-
-
+    @application_site =  'hollandamerica'
+    @nginx_server_block = "/etc/nginx/sites-available/#{@application_site}"
     stub_data_bag(@vault_databag).and_return(
         {
             'seedvalue' => nil,
@@ -60,7 +70,21 @@ describe 'databag_manager::default' do
                         'Xmx' => @Xmx,
                         'PermSize' => @PermSize,
                         'MaxPermSize' => @MaxPermSize
-                    }
+                    },
+                    'host_config' => nil,
+			'cms' => {'url'=>nil },
+			'dbweb' => {'url'=>nil},
+			'dbdwh' => {'url'=>nil, 'driverClassName'=>nil},
+
+			'polar' => {
+                                  'sbn' => {
+                                              'url'=>nil
+                                             }, 
+                                    'hal'=>{'url'=>nil}, 
+                                    'load_cabin_metadata'=>nil , 
+                                    'cabin_metadata_location' =>nil
+                                   }
+
                 }
             }
         }
@@ -91,6 +115,11 @@ describe 'databag_manager::default' do
                                     {
                                         'dbdwh' => @dbdwh
                                     })
+      allow(ChefVault::Item).to receive(:load).with(@vault_databag, 'polar').and_return(
+                                    {
+                                        'polar' => @polar
+                                    })
+
       # Stub node parameters hidden in erb template
       node.set[:keystore][:location]  = @keystore_location 
       node.set[:keystore][:password]  = @keystore_password
@@ -133,4 +162,11 @@ describe 'databag_manager::default' do
     expect(resource).to_not notify("service['#{@application_server}']").to(:restart).delayed
   end
 
+  it 'notifies nginx' do
+    resource = chef_run.file(@nginx_server_block )
+    expect(resource).to_not notify('service[nginx]').to(:restart).delayed
+  end
+
 end
+
+# http://stackoverflow.com/questions/21808145/mocking-out-file-contents-in-chefspec

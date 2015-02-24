@@ -1,0 +1,13 @@
+    sbn {
+        user: "<%= @sbn_hal_username %>",
+        pwd: "<%= @sbn_hal_password %>",
+        url: "<%= @sbn_hal_url %>"
+    }
+
+    loadCabinMetadata: <%= @polar_load_cabin_metadata %>
+    dataLocation: <%= @polar_cabin_metadata_location %>
+    cabin {
+        maxNumCabins: 10
+    }
+}
+

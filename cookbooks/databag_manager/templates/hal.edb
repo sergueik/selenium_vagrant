@@ -1,0 +1,5 @@
+hal {
+    cms {
+        url: "<%= @cms_url %>"
+    }
+}

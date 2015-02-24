@@ -1,0 +1,14 @@
+server {
+    listen           443 ssl;
+    server_name      <%= @host_config['host_name'] %>;
+
+    ssl_certificate      <%= @host_config['certificates']['public'] %>;
+    ssl_certificate_key  <%= @host_config['certificates']['private'] %>;
+
+    proxy_redirect        off;
+    proxy_set_header      X-Forwarded-Proto $scheme;
+    proxy_set_header      X-Forwarded-For   $proxy_add_x_forwarded_for;
+    proxy_set_header      X-Real-IP         $remote_addr;
+
+    include secondaryflow.conf;
+}

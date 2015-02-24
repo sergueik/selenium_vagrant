@@ -1,0 +1,6 @@
+polar {
+    hal {
+        user: "<%= @polar_hal_username %>",
+        pwd: "<%= @polar_hal_password %>",
+        url: "<%= @polar_hal_url %>"
+    }

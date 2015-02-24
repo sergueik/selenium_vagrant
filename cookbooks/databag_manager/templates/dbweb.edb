@@ -1,0 +1,8 @@
+dbweb {
+    driverClassName: "<%= @dbweb_driverClassName %>"
+    url: "<%= @dbweb_url %>"
+    username: <%= @dbweb_username %>
+    password: <%= @dbweb_password %>
+}
+
+

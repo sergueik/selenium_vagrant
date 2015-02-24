@@ -1,0 +1,6 @@
+dbdwh {
+    driverClassName: "<%= @dbdwh_driverClassName %>"
+    url: "<%= @dbdwh_url %>"
+    username: <%= @dbdwh_username %>
+    password: <%= @dbdwh_password %>
+}

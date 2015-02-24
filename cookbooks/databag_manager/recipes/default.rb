@@ -4,7 +4,9 @@ environment = node.chef_environment
 vault_databag = "#{environment}-vault"
 application_databag = "#{environment}_tomcat_app_config"
 service_name = 'hal-giftsf-server'
-
+service_conf_name =  "/etc/hal-chip-server/chip.conf"
+server_conf_template = 'chip.conf.erb'
+application_site =  'hollandamerica'
 
 if data_bag(vault_databag).include? 'seedvalue'
   seed = ChefVault::Item.load(vault_databag, 'seedvalue')
@@ -26,6 +28,7 @@ else
   dbdwh = ChefVault::Item.load(vault_databag, 'dbdwh')
 end
 
+polar = ChefVault::Item.load(vault_databag, 'polar')
 dataBagItem = data_bag_item(application_databag, service_name)
 application = dataBagItem[environment]['application']
 rpm_version = application['rpm_version']
@@ -36,27 +39,19 @@ chef_gem 'chef-vault' do
 action :install
 end
 
-log "seedvalue=#{seedvalue}" do
-  level :info
-end
 
-log "dbweb=#{dbweb}" do
-  level :info
-end
+info = <<-INFO_END
 
-log "dbdwh=#{dbdwh}" do
-  level :info
-end
+seedvalue = #{seedvalue}
+dbweb = #{dbweb}
+dbdwh = #{dbdwh}
+user = #{user_account}
+group = #{group_account}
+rpm_version = #{rpm_version}
 
-log "user=#{user_account}" do
-  level :info
-end
+INFO_END
 
-log "group=#{group_account}" do
-  level :info
-end
-
-log "rpm_version=#{rpm_version}" do
+log info do
   level :info
 end
 
@@ -91,4 +86,49 @@ template "/etc/#{service_name}/setenv.sh" do
   )
   action :create
   notifies :restart, "service[#{service_name}]"
+end
+
+
+template  service_conf_name  do
+  source server_conf_template
+  owner user_account
+  group group_account
+  mode 00644
+  variables(
+# skip while mock up  is not ready 
+      :dbweb_username => dbweb['dbweb_username'],
+      :dbweb_password => dbweb['dbweb_password'],
+      :dbweb_url => application['dbweb']['url'],
+      :dbweb_driverClassName => application['dbweb']['driverClassName'],
+      :dbdwh_username => dbdwh['dbdwh_username'],
+      :dbdwh_password => dbdwh['dbdwh_password'],
+      :dbdwh_url => application['dbdwh']['url'],
+      :dbdwh_driverClassName => application['dbdwh']['driverClassName'],
+      :polar_hal_username => polar['hal_username'],
+      :polar_hal_password => polar['hal_password'],
+      :polar_hal_url => application['polar']['hal']['url'],
+      :sbn_hal_username => polar['sbn_username'],
+      :sbn_hal_password => polar['sbn_password'],
+      :sbn_hal_url => application['polar']['sbn']['url'],
+      :polar_load_cabin_metadata => application['polar']['load_cabin_metadata'],
+      :polar_cabin_metadata_location => application['polar']['cabin_metadata_location'],
+      :cms_url => application['cms']['url']
+  )
+  notifies :restart, "service[#{service_name}]"
+end
+
+template "/etc/nginx/sites-available/#{application_site}" do
+  source 'nginx_server_block.erb'
+  owner user_account 
+  group group_account 
+  mode 00644
+  variables(
+    :host_config => application['host_config']
+  )
+  notifies :reload, "service[nginx]"
+end
+
+service 'nginx' do
+  supports :start => true, :stop => true, :restart => true, :condrestart => true, :'try-restart' => true, :'force-reload' => true, :upgrade => true, :reload => true, :status => true, :configtest => true
+  action :start
 end
