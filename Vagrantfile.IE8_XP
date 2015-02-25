@@ -1,0 +1,24 @@
+# -*- mode: ruby -*-
+# vi: set ft=ruby :
+
+
+VAGRANTFILE_API_VERSION = '2'
+
+Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
+
+  config.vm.box_url = 'http://aka.ms/vagrant-xp-ie8' 
+  config.vm.box = 'IE8_XP'
+
+  # TODO : ubuntu/trusty32
+  # vagrant up ubuntu/trusty32 --provider virtualbox
+
+  config.vm.network 'forwarded_port', guest: 4444,  host: 4444
+  config.vm.network 'forwarded_port', guest: 5901,  host: 5901
+  config.vm.host_name = 'chef-book'
+  config.vm.boot_timeout = 60
+  config.vm.provider "virtualbox" do |v|
+    v.memory = 1024
+    v.cpus = 1
+    v.gui = false
+  end
+end
