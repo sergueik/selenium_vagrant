@@ -10,22 +10,23 @@ describe 'databag_manager::default' do
     @vault_databag = 'spec-vault'
     @seedvalue = 12345
     @dbweb = {
-        'dbweb_username' => nil ,
-        'dbweb_password' => nil 
+        'dbweb_username' => 'xxx_user' ,
+        'dbweb_password' => 'password'
     }
     @dbdwh = {
-        'dbweb_username' => nil ,
-        'dbweb_password' => nil 
+        'dbdwh_username' => nil ,
+        'dbdwh_password' => nil 
     }
     @polar = {
         'hal_username' => nil ,
         'hal_password' => nil ,
-'sbn_username'=>nil,
-'sbn_password'=>nil
+        'sbn_username'=>nil,
+        'sbn_password'=>nil
     }
     @rpm_version = '42'
     @package_name = @application_server = 'hal-giftsf-server'
     @server_config_databag = 'spec_tomcat_app_config'
+    @service_conf_name =  "/etc/#{@application_server}/chip.conf"
     @user_account = nil
     @group_account = nil
     @http_port = nil
@@ -107,10 +108,10 @@ describe 'databag_manager::default' do
                                     {
                                         'seedvalue' => @seedvalue
                                     })
-      allow(ChefVault::Item).to receive(:load).with(@vault_databag, 'dbweb-enc').and_return(
-                                    {
-                                        'dbweb' => @dbweb
-                                    })
+      allow(ChefVault::Item).to receive(:load).with(@vault_databag, 'dbweb-enc').and_return( @dbweb ) 
+                                #    {
+                                #       'dbdweb' => @dbweb
+                                #    })
       allow(ChefVault::Item).to receive(:load).with(@vault_databag, 'dbdwh').and_return(
                                     {
                                         'dbdwh' => @dbdwh
@@ -166,6 +167,29 @@ describe 'databag_manager::default' do
     resource = chef_run.file(@nginx_server_block )
     expect(resource).to_not notify('service[nginx]').to(:restart).delayed
   end
+  # https://www.relishapp.com/rspec/rspec-expectations/docs/built-in-matchers/satisfy-matcher
+
+  it 'generates a valid init script configuration' do
+    expect(chef_run).to render_file(@service_conf_name).with_content(/.*/)
+  end
+
+  it 'generates a valid json configuration' do
+    expect(chef_run).to render_file(@service_conf_name).with_content(satisfy { |content|
+ pat =/
+  ^      # match start of line
+  \s*    # match zero or more spaces
+  $      # match end-of-line
+/x
+
+pieces = content.split(pat)
+
+config = pieces[3]
+config.gsub!('polar','')
+Chef::Log.info(config)
+STDERR.puts config
+# content.scan( /^[\s#]*$(\{[^}]*\})^[\s#]*$/).last.first
+    JSON.parse(config) rescue nil })
+  end 
 
 end
 
