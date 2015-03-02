@@ -9,7 +9,7 @@ selenium_home = "#{account_home}/selenium"
 log4j_properties_file = 'hub.log4j.properties'
 logfile = 'hub.log'
 logger = 'INFO'
-
+jar_filename = 'selenium.jar'
 # Create selenium hub service script.
 %w{selenium_hub}.each do |init_script| 
   template ("/etc/init.d/#{init_script}") do 
@@ -39,8 +39,19 @@ directory "#{account_home}/selenium" do
   action :create
 end
 
+# Workaround Proxy issue 
+bash 'extract_jar' do
+  cwd ::File.dirname(selenium_home)
+  code <<-EOH
+     /usr/bin/wget -O "#{selenium_home}/#{jar_filename}" #{node['selenium_node']['selenium']['url']} 
+    EOH
+  not_if { ::File.exists?("#{selenium_home}/#{jar_filename}") }
+end
+
+
+
 # Install selenium jar
-remote_file "#{account_home}/selenium/selenium.jar" do
+remote_file "#{selenium_home}/#{jar_filename}" do
   source node['selenium_node']['selenium']['url']
   action :create_if_missing
   # NOTE version !
