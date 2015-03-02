@@ -18,7 +18,7 @@ end
 
 Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
 
-  if VAGRANT_USE_PROXY
+  if VAGRANT_USE_PROXY == 1
     if Vagrant.has_plugin?('vagrant-proxyconf')
       # https://github.com/tmatilai/vagrant-proxyconf
       # https://github.com/WinRb/vagrant-windows
@@ -59,5 +59,14 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
     chef.add_recipe 'selenium_node'
 #    chef.add_recipe 'databag_manager'
     chef.log_level = 'info' 
+    # chef.add_recipe 'windows'
+    # chef.add_recipe 'powershell'
+    # chef.add_recipe 'sample'
+    # https://github.com/dhoer/chef-selenium
+    # chef.add_recipe 'chef-selenium'
+    # https://github.com/dhoer/chef-nssm
+    # temporarily exclude, manually copied nssm.exe to C:\windows
+    # chef.add_recipe 'chef-nssm'
+    # TODO: java, firefox, chrome, chromedriver etc.   
   end
 end
