@@ -8,6 +8,9 @@ SELENIUM_USER="<%= @user_name %>"
 SELENIUM_HOME="<%= @selenium_home %>"
 SERVICE_NAME='selenium'
 PATH=/sbin:/usr/sbin:/bin:/usr/bin
+# This assumes no other version was installed already
+PATH=$PATH:${SELENIUM_HOME}/firefox
+export PATH
 DEFAULTS="/etc/default/${SERVICE_NAME}"
 INITSCRIPT="$(basename "$0")"
 JOB="${INITSCRIPT%.sh}"

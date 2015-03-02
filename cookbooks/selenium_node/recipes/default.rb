@@ -3,6 +3,7 @@ log 'Installing Selenium node' do
 end
 
 # Define variables for attributes
+use_default_version = false
 account_username = node['vnc']['account_username'];
 account_home     = "/home/#{account_username}";
 selenium_home = "#{account_home}/selenium"
@@ -11,9 +12,46 @@ logfile = 'node.log'
 logger = 'INFO'
 
 # Install Firefox
-package 'Install Firefox' do
-  package_name 'firefox'
-  action :install
+if use_default_version
+  package 'Install Firefox' do
+    package_name 'firefox'
+    action :install
+    ignore_failure false
+  end
+else
+# Ununstall Firefox
+  package 'Install Firefox' do
+    package_name 'firefox'
+    action [:remove,:purge]
+    ignore_failure true
+  end
+  directory "#{account_home}/selenium/firefox" do
+    owner account_username
+    group account_username
+    mode  00755
+    recursive true
+    action :create
+  end
+  remote_file "#{account_home}/selenium/firefox-35.0.1.tar.bz2" do
+    source node['selenium_node']['firefox']['url']
+    action :create_if_missing
+    ignore_failure true
+    owner account_username
+  end
+  
+  # Extract and place the directory
+  bash 'extract_release_archive' do
+    cwd ::File.dirname(selenium_home)
+    code <<-EOH
+     /usr/bin/wget -O "#{selenium_home}/firefox-35.0.1.tar.bz2" "#{node['selenium_node']['firefox']['url']}"
+     pushd #{selenium_home}
+     /bin/tar xjvf "#{selenium_home}/firefox-35.0.1.tar.bz2" -C #{selenium_home}
+     chown -R #{account_username}:#{account_username} .
+
+    EOH
+    not_if { ::File.exists?("#{selenium_home}/firefox/firefox-bin") }
+  end
+
 end
 
 # TODO - generate profile directories

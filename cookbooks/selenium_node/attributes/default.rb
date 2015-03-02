@@ -11,3 +11,8 @@ default['selenium_node']['node'] = 'LINUX'
 default['selenium_node']['hub_ip'] = '127.0.0.1'
 # trying vnc
 default['selenium_node']['display_port'] = '1'
+default['selenium_node']['firefox']['url'] = \
+'https://download-installer.cdn.mozilla.net/pub/firefox/releases/35.0.1/linux-x86_64/en-US/firefox-35.0.1.tar.bz2'
+# 'https://download-installer.cdn.mozilla.net/pub/firefox/releases/35.0.1/linux-i686/en-US/firefox-35.0.1.tar.bz2'
+
+default['selenium_node']['firefox']['version'] = '35.0.1'
