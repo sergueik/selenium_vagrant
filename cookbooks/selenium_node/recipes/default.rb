@@ -7,6 +7,10 @@ use_default_version = false
 account_username = node['vnc']['account_username'];
 account_home     = "/home/#{account_username}";
 selenium_home = "#{account_home}/selenium"
+selenium_version  = node['selenium_node']['selenium']['version']
+standalone_script = 'run-node.sh'
+display_port = node['selenium_node']['display_port'] 
+display_port = node['xvfb']['display_port']
 log4j_properties_file = 'node.log4j.properties'
 logfile = 'node.log'
 logger = 'INFO'
@@ -19,7 +23,7 @@ if use_default_version
     ignore_failure false
   end
 else
-# Ununstall Firefox
+  # Ununstall Firefox
   package 'Install Firefox' do
     package_name 'firefox'
     action [:remove,:purge]
@@ -35,6 +39,10 @@ else
   remote_file "#{account_home}/selenium/firefox-35.0.1.tar.bz2" do
     source node['selenium_node']['firefox']['url']
     action :create_if_missing
+    #  will fail with, failure will be ignored 
+    #  ==> default: Net::HTTPServerException
+    #  ==> default: ------------------------
+    #  ==> default: 407 "Proxy Authentication Required ( Forefront TMG requires authorization to fulfill the request. Access to the Web Proxy filter is denied.  )"
     ignore_failure true
     owner account_username
   end
@@ -53,7 +61,6 @@ else
   end
 
 end
-
 # TODO - generate profile directories
 
 # Create selenium node service script.
@@ -68,13 +75,31 @@ end
 	:node_port => node['selenium_node']['node_port'],
 	:node => node['selenium_node']['node'] ,
 	:hub_ip => node['selenium_node']['hub_ip'], 
-	:display_port => node['selenium_node']['display_port'] 
+	:display_port => display_port, 
+    ) 
+    owner account_username
+    group account_username
+    mode 00755
+  end 
+end
+
+# Create selenium node standalone launcher script.
+  template ("#{selenium_home}/#{standalone_script}") do 
+    source 'standalone_sh.erb'
+    variables(
+        :user_name => account_username,
+	:selenium_home => selenium_home,
+        :log4j_properties_file =>log4j_properties_file ,
+	:hub_port => node['selenium_node']['hub_port'], 
+	:node_port => node['selenium_node']['node_port'],
+	:node => node['selenium_node']['node'] ,
+	:hub_ip => node['selenium_node']['hub_ip'], 
+	:display_port => display_port,
     ) 
     owner 'root'
     group 'root'
     mode 00755
   end 
-end
 
 directory "#{account_home}/selenium" do
   owner account_username
