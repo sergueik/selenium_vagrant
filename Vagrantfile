@@ -6,7 +6,7 @@
 
 VAGRANTFILE_API_VERSION = '2'
 
-VAGRANT_USE_PROXY = 0 
+VAGRANT_USE_PROXY = 1 
 
 env_name = 'HTTP_PROXY'
 http_proxy = nil 
@@ -18,7 +18,7 @@ end
 
 Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
 
-  if VAGRANT_USE_PROXY == 1
+  if VAGRANT_USE_PROXY
     if Vagrant.has_plugin?('vagrant-proxyconf')
       # https://github.com/tmatilai/vagrant-proxyconf
       # https://github.com/WinRb/vagrant-windows
@@ -51,22 +51,14 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
   end
   config.vm.provision :chef_solo do |chef|
     chef.data_bags_path = 'data_bags'
-    chef.add_recipe 'base'
     chef.add_recipe 'wrapper_java'
     chef.add_recipe 'xvfb'
     chef.add_recipe 'vnc'
     chef.add_recipe 'selenium_hub'
     chef.add_recipe 'selenium_node'
-#    chef.add_recipe 'databag_manager'
     chef.log_level = 'info' 
-    # chef.add_recipe 'windows'
-    # chef.add_recipe 'powershell'
-    # chef.add_recipe 'sample'
-    # https://github.com/dhoer/chef-selenium
-    # chef.add_recipe 'chef-selenium'
-    # https://github.com/dhoer/chef-nssm
-    # temporarily exclude, manually copied nssm.exe to C:\windows
-    # chef.add_recipe 'chef-nssm'
-    # TODO: java, firefox, chrome, chromedriver etc.   
   end
 end
+
+
+# IGNORE W: Failed to fetch http://security.ubuntu.com/ubuntu/dists/precise-security/universe/i18n/Translation-en_US  Unable to connect to security.ubuntu.com:http: [IP: 91.189.91.24 80]
