@@ -6,10 +6,19 @@ end
 account_username = node['vnc']['account_username'];
 account_home     = "/home/#{account_username}";
 selenium_home = "#{account_home}/selenium"
+account_home     = "/home/#{account_username}";
+selenium_home = "#{account_home}/selenium"
+selenium_version  = node['selenium_node']['selenium']['version']
+standalone_script = 'run-hub.sh'
+# display_port = node['vnc']['display_port'] 
+display_port = node['xvfb']['display_port']
+
 log4j_properties_file = 'hub.log4j.properties'
 logfile = 'hub.log'
 logger = 'INFO'
-jar_filename = 'selenium.jar'
+jar_filename = 'selenium-server-standalone.jar'
+
+
 # Create selenium hub service script.
 %w{selenium_hub}.each do |init_script| 
   template ("/etc/init.d/#{init_script}") do 
@@ -22,13 +31,32 @@ jar_filename = 'selenium.jar'
 	:node_port => node['selenium_node']['node_port'],
 	:node => node['selenium_node']['node'] ,
 	:hub_ip => node['selenium_node']['hub_ip'], 
-	:display_port => node['selenium_node']['display_port'] 
+	:display_port => display_port
     ) 
     owner 'root'
     group 'root'
     mode 00755
   end 
 end
+
+# Create selenium hub standalone launcher script.
+  template ("#{selenium_home}/#{standalone_script}") do 
+    source 'standalone.erb'
+    variables(
+        :user_name => account_username,
+	:selenium_home => selenium_home,
+        :log4j_properties_file =>log4j_properties_file ,
+	:hub_port => node['selenium_node']['hub_port'], 
+	:node_port => node['selenium_node']['node_port'],
+	:node => node['selenium_node']['node'] ,
+	:hub_ip => node['selenium_node']['hub_ip'], 
+	:display_port => display_port,
+    ) 
+    owner 'root'
+    group 'root'
+    mode 00755
+  end 
+
 
 # Create selenium folder
 directory "#{account_home}/selenium" do

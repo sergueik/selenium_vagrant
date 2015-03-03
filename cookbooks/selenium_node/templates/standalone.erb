@@ -98,13 +98,15 @@ fi
 # This code verifies that correct version of selenium jar is linked to 
 # simply selenium-sever-standalone.jar. 
 # The hub and node use similar code to cleanup 
-
+if [ $VERIFY_SELENIUM_JAR_VERSION ] 
+then 
 /bin/readlink selenium-server-standalone.jar | grep -in $SELENIUM_JAR_VERSION >/dev/null
 if [ $? != 0 ]
 then 
 echo "The Selenium version is incorrect: need version '$SELENIUM_JAR_VERSION'"
 ls -l selenium*jar
 exit 0
+fi
 fi
 # This code detects if hub is already running. This is required, otherwise 
 # the port listener based instance cleanup logic will not work.
@@ -136,7 +138,7 @@ kill $RUNNING_PID
 echo "Done."
 fi
 
-if [ $TERM_FIREFOX_INSTANCES ] 
+if [ $TERM_FIREFOX_INSTANCES ]
 then
 echo Killing firefoxes
 # This code terminates Firefox instances 

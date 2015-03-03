@@ -11,6 +11,7 @@ selenium_version  = node['selenium_node']['selenium']['version']
 standalone_script = 'run-node.sh'
 display_port = node['selenium_node']['display_port'] 
 display_port = node['xvfb']['display_port']
+jar_filename = 'selenium-server-standalone.jar'
 log4j_properties_file = 'node.log4j.properties'
 logfile = 'node.log'
 logger = 'INFO'
@@ -85,7 +86,7 @@ end
 
 # Create selenium node standalone launcher script.
   template ("#{selenium_home}/#{standalone_script}") do 
-    source 'standalone_sh.erb'
+    source 'standalone.erb'
     variables(
         :user_name => account_username,
 	:selenium_home => selenium_home,
