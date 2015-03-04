@@ -84,25 +84,8 @@ end
   end 
 end
 
-# Create selenium node standalone launcher script.
-  template ("#{selenium_home}/#{standalone_script}") do 
-    source 'standalone.erb'
-    variables(
-        :user_name => account_username,
-	:selenium_home => selenium_home,
-        :log4j_properties_file =>log4j_properties_file ,
-	:hub_port => node['selenium_node']['hub_port'], 
-	:node_port => node['selenium_node']['node_port'],
-	:node => node['selenium_node']['node'] ,
-	:hub_ip => node['selenium_node']['hub_ip'], 
-	:display_port => display_port,
-    ) 
-    owner 'root'
-    group 'root'
-    mode 00755
-  end 
-
-directory "#{account_home}/selenium" do
+# Create selenium node folder
+directory selenium_home do
   owner account_username
   group account_username
   mode  00755
@@ -110,14 +93,34 @@ directory "#{account_home}/selenium" do
   action :create
 end
 
-remote_file "#{account_home}/selenium/selenium.jar" do
+# Workaround Net::HTTPServerException 407 Forefront TMG Proxy issue 
+# Create selenium node standalone launcher script.
+template ("#{selenium_home}/#{standalone_script}") do 
+  source 'standalone.erb'
+  variables(
+    :user_name => account_username,
+    :selenium_home => selenium_home,
+    :log4j_properties_file =>log4j_properties_file ,
+    :hub_port => node['selenium_node']['hub_port'], 
+    :node_port => node['selenium_node']['node_port'],
+    :node => node['selenium_node']['node'] ,
+    :hub_ip => node['selenium_node']['hub_ip'], 
+    :display_port => display_port,
+    ) 
+  owner account_username
+  group account_username
+  mode 00755
+end 
+
+remote_file "#{selenium_home}/#{jar_filename}" do
   source node['selenium_node']['selenium']['url']
   action :create_if_missing
+  ignore_failure true
   # NOTE version !
   owner account_username
 end
 
-template "#{account_home}/selenium/node.json" do
+template "#{selenium_home}/node.json" do
   source 'node.json.erb'
   variables(
      # NOTE: do not use :platform
