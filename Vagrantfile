@@ -91,4 +91,3 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
     chef.log_level = 'info' 
   end
 end
-
