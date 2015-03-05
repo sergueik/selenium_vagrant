@@ -19,7 +19,18 @@ logger = 'INFO'
 jar_filename = 'selenium-server-standalone.jar'
 
 
+# Create selenium hub service script configuratrion required for provider.
+# TODO conditions
+
+file '/etc/init/selenium_hub.conf' do
+  owner 'root'
+  group 'root'
+  mode 00755
+  action :touch
+end
 # Create selenium hub service script.
+
+
 %w{selenium_hub}.each do |init_script| 
   template ("/etc/init.d/#{init_script}") do 
     source 'initscript.erb'

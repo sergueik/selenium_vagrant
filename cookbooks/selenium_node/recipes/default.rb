@@ -64,6 +64,18 @@ else
 end
 # TODO - generate profile directories
 
+# Create selenium node service script configuratrion required for provider.
+# TODO conditions
+
+file '/etc/init/selenium_node.conf' do
+  owner 'root'
+  group 'root'
+  mode 00755
+  action :touch
+end
+
+
+
 # Create selenium node service script.
 %w{selenium_node}.each do |init_script| 
   template ("/etc/init.d/#{init_script}") do 
