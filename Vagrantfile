@@ -55,7 +55,8 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
   # ...
   # E: Some index files failed to download. They have been ignored, or old ones used instead.
 
-  config.vm.box_url = 'file://c:/Users/sergueik/Downloads/trusty-server-cloudimg-i386-vagrant-disk1.box  ' 
+  config.vm.box_url = 'file:///home/sergueik/Downloads/trusty-server-cloudimg-i386-vagrant-disk1.box' 
+#  config.vm.box_url = 'file://c:/Users/sergueik/Downloads/trusty-server-cloudimg-i386-vagrant-disk1.box' 
   config.vm.box = 'ubuntu/trusty32'
   #  default: Adding box 'ubuntu/trusty32' (v0) for provider: virtualbox
   #  default: Downloading: https://cloud-images.ubuntu.com/vagrant/trusty/current/trusty-server-cloudimg-i386-vagrant-disk1.box
