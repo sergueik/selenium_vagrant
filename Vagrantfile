@@ -78,13 +78,14 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
   config.vm.provider 'virtualbox' do |v|
     v.memory = 1024
     v.cpus = 1 
-    # first time only for thoubleshooting , discoverd no VT
+    # first time only for thoubleshooting , when an VNC discovered 
     v.gui = false
   end
   # Linux node recipes
   config.vm.provision :chef_solo do |chef|
     chef.data_bags_path = 'data_bags'
     chef.add_recipe 'wrapper_java'
+    chef.add_recipe 'wrapper_hostsfile'
     chef.add_recipe 'xvfb'
     chef.add_recipe 'vnc'
     chef.add_recipe 'selenium_hub'

@@ -4,7 +4,10 @@ test-output/
 .classpath
 .settings/
 .vagrant/
+cookbooks/hostsfile/**/*
 .chef
 .project
 **/*~
 **/*.swp
+.kitchen/
+.kitchen.local.yml
