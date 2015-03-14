@@ -14,7 +14,7 @@ export PATH
 DEFAULTS="/etc/default/${SERVICE_NAME}"
 INITSCRIPT="$(basename "$0")"
 JOB="${INITSCRIPT%.sh}"
-
+JAR_FILENAME='selenium-server-standalone.jar'
 export NODE_PORT=<%= @node_port %>
 export HUB_IP_ADDRESS=<%= @hub_ip %>
 export HUB_PORT=<%= @hub_port %>
@@ -33,7 +33,7 @@ COMMAND="$1"
 # TODO: process when JAVA_HOME not ser
 export JAVA_HOME='/usr/bin'
 SELENIUM_ARGS=`cat<<END_ARGS
--classpath ${SELENIUM_HOME}/log4j-1.2.17.jar:${SELENIUM_HOME}/selenium.jar \
+-classpath ${SELENIUM_HOME}/log4j-1.2.17.jar:${SELENIUM_HOME}/${JAR_FILENAME} \
 -Dlog4j.configuration=file:${SELENIUM_HOME}/<%= @log4j_properties_file %> \
 org.openqa.grid.selenium.GridLauncher \
 -role $ROLE \
@@ -106,4 +106,3 @@ case $COMMAND in
 esac
 
 exit $RETVAL
-

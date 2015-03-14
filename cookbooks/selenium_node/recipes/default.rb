@@ -5,9 +5,9 @@ end
 # Define variables for attributes
 use_default_version = false
 account_username = node['vnc']['account_username'];
-account_home     = "/home/#{account_username}";
+account_home = "/home/#{account_username}";
 selenium_home = "#{account_home}/selenium"
-selenium_version  = node['selenium_node']['selenium']['version']
+selenium_version = node['selenium']['selenium']['version']
 standalone_script = 'run-node.sh'
 display_port = node['selenium_node']['display_port'] 
 display_port = node['xvfb']['display_port']
@@ -15,6 +15,7 @@ jar_filename = 'selenium-server-standalone.jar'
 log4j_properties_file = 'node.log4j.properties'
 logfile = 'node.log'
 logger = 'INFO'
+firefox_install_archive = "firefox-#{node['selenium']['firefox']['version']}.tar.bz2" 
 
 # Install Firefox
 if use_default_version
@@ -37,8 +38,8 @@ else
     recursive true
     action :create
   end
-  remote_file "#{account_home}/selenium/firefox-35.0.1.tar.bz2" do
-    source node['selenium_node']['firefox']['url']
+  remote_file "#{account_home}/selenium/#{firefox_install_archive}" do
+    source node['selenium']['firefox']['url']
     action :create_if_missing
     #  will fail with, failure will be ignored 
     #  ==> default: Net::HTTPServerException
@@ -52,9 +53,9 @@ else
   bash 'extract_release_archive' do
     cwd ::File.dirname(selenium_home)
     code <<-EOH
-     /usr/bin/wget -O "#{selenium_home}/firefox-35.0.1.tar.bz2" "#{node['selenium_node']['firefox']['url']}"
+     /usr/bin/wget -O "#{selenium_home}/#{firefox_install_archive}" "#{node['selenium']['firefox']['url']}"
      pushd #{selenium_home}
-     /bin/tar xjvf "#{selenium_home}/firefox-35.0.1.tar.bz2" -C #{selenium_home}
+     /bin/tar xjvf "#{selenium_home}/#{firefox_install_archive}" -C #{selenium_home}
      chown -R #{account_username}:#{account_username} .
 
     EOH
@@ -64,30 +65,26 @@ else
 end
 # TODO - generate profile directories
 
-# Create selenium node service script configuratrion required for provider.
-# TODO conditions
-
-file '/etc/init/selenium_node.conf' do
-  owner 'root'
-  group 'root'
-  mode 00755
-  action :touch
-end
-
-
-
-# Create selenium node service script.
 %w{selenium_node}.each do |init_script| 
+
+  if node[:platform_version].to_i >= 14 
+    # Create selenium node service script configuratrion required for provider.
+    file "/etc/init/#{init_script}.conf"  do
+      owner 'root'
+      group 'root'
+      mode 00755
+      action :create_if_missing
+    end
+  end
   template ("/etc/init.d/#{init_script}") do 
     source 'initscript.erb'
     variables(
         :user_name => account_username,
 	:selenium_home => selenium_home,
         :log4j_properties_file =>log4j_properties_file ,
+	:hub_ip => node['selenium_node']['hub_ip'], 
 	:hub_port => node['selenium_node']['hub_port'], 
 	:node_port => node['selenium_node']['node_port'],
-	:node => node['selenium_node']['node'] ,
-	:hub_ip => node['selenium_node']['hub_ip'], 
 	:display_port => display_port, 
     ) 
     owner account_username
@@ -113,10 +110,9 @@ template ("#{selenium_home}/#{standalone_script}") do
     :user_name => account_username,
     :selenium_home => selenium_home,
     :log4j_properties_file =>log4j_properties_file ,
+    :hub_ip => node['selenium_node']['hub_ip'], 
     :hub_port => node['selenium_node']['hub_port'], 
     :node_port => node['selenium_node']['node_port'],
-    :node => node['selenium_node']['node'] ,
-    :hub_ip => node['selenium_node']['hub_ip'], 
     :display_port => display_port,
     ) 
   owner account_username
@@ -125,7 +121,7 @@ template ("#{selenium_home}/#{standalone_script}") do
 end 
 
 remote_file "#{selenium_home}/#{jar_filename}" do
-  source node['selenium_node']['selenium']['url']
+  source node['selenium']['selenium']['url']
   action :create_if_missing
   ignore_failure true
   # NOTE version !
@@ -146,7 +142,7 @@ end
 # Start Selenium server and client
 %w{selenium_node}.each do |service_name|
   service service_name do
-    unless node[:platform_version].match( /14\./).nil?
+    unless node[:platform_version].to_i < 14 
       provider Chef::Provider::Service::Upstart
     else
       provider Chef::Provider::Service::Debian

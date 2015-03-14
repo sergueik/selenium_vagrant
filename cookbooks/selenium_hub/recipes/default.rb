@@ -8,7 +8,7 @@ account_home     = "/home/#{account_username}";
 selenium_home = "#{account_home}/selenium"
 account_home     = "/home/#{account_username}";
 selenium_home = "#{account_home}/selenium"
-selenium_version  = node['selenium_node']['selenium']['version']
+selenium_version  = node['selenium']['selenium']['version']
 standalone_script = 'run-hub.sh'
 # display_port = node['vnc']['display_port'] 
 display_port = node['xvfb']['display_port']
@@ -18,30 +18,26 @@ logfile = 'hub.log'
 logger = 'INFO'
 jar_filename = 'selenium-server-standalone.jar'
 
-
-# Create selenium hub service script configuratrion required for provider.
-# TODO conditions
-
-file '/etc/init/selenium_hub.conf' do
-  owner 'root'
-  group 'root'
-  mode 00755
-  action :touch
-end
-# Create selenium hub service script.
-
-
 %w{selenium_hub}.each do |init_script| 
+
+  if node[:platform_version].to_i >= 14 
+    # Create selenium node service script configuratrion required for provider.
+    file "/etc/init/#{init_script}.conf"  do
+      owner 'root'
+      group 'root'
+      mode 00755 
+      action :create_if_missing
+    end
+  end
   template ("/etc/init.d/#{init_script}") do 
     source 'initscript.erb'
     variables(
         :user_name => account_username,
 	:selenium_home => selenium_home,
         :log4j_properties_file =>log4j_properties_file ,
+	:hub_ip => node['selenium_node']['hub_ip'], 
 	:hub_port => node['selenium_node']['hub_port'], 
 	:node_port => node['selenium_node']['node_port'],
-	:node => node['selenium_node']['node'] ,
-	:hub_ip => node['selenium_node']['hub_ip'], 
 	:display_port => display_port
     ) 
     owner 'root'
@@ -66,10 +62,9 @@ template ("#{selenium_home}/#{standalone_script}") do
     :user_name => account_username,
     :selenium_home => selenium_home,
     :log4j_properties_file =>log4j_properties_file ,
+    :hub_ip => node['selenium_node']['hub_ip'], 
     :hub_port => node['selenium_node']['hub_port'], 
     :node_port => node['selenium_node']['node_port'],
-    :node => node['selenium_node']['node'] ,
-    :hub_ip => node['selenium_node']['hub_ip'], 
     :display_port => display_port,
     ) 
   owner account_username
@@ -80,32 +75,27 @@ end
 
 # Install selenium jar
 remote_file "#{selenium_home}/#{jar_filename}" do
-  source node['selenium_node']['selenium']['url']
+  source node['selenium']['selenium']['url']
   action :create_if_missing
   ignore_failure true
   # TODO: version !
   owner account_username
 end
 
-
 # Workaround Net::HTTPServerException 407 Forefront TMG Proxy issue 
 bash 'extract_jar' do
   cwd ::File.dirname(selenium_home)
   code <<-EOH
-     /usr/bin/wget -O "#{selenium_home}/#{jar_filename}" #{node['selenium_node']['selenium']['url']} 
+     /usr/bin/wget -O "#{selenium_home}/#{jar_filename}" #{node['selenium']['selenium']['url']} 
     EOH
   not_if { ::File.exists?("#{selenium_home}/#{jar_filename}") }
 end
-
-
 
 # Start the service 
 %w{selenium_hub}.each do |service_name|
   service service_name do
     # NOTE: Init replace with Upstart for 14.04
-    # Error executing action `enable` on resource 'service[selenium_hub]' on trusty!
-    # File '/etc/init/selenium_hub.conf' does not exist
-    unless node[:platform_version].match( /14\./).nil?
+    unless node[:platform_version].to_i < 14 
       provider Chef::Provider::Service::Upstart
     else
       provider Chef::Provider::Service::Debian
