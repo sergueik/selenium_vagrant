@@ -1,15 +1,8 @@
 default['wrapper_hostsfile']['sut_hosts'] = {
-# TODO: handle aliases 
- '172.26.5.51' =>   'www.carnival.com',
- '172.26.5.51' =>   'origin-www.carnival.com',
- '172.26.5.56' =>   'www.carnival.co.uk'
-}
-default['wrapper_hostsfile']['sut_hosts2'] = {
  '172.26.5.51' =>   %w/www.carnival.com
                        origin-www.carnival.com/,
  '172.26.5.56' =>   'www.carnival.co.uk'
 }
-
 
 # third-party hostnames
 default['wrapper_hostsfile']['loopback_hostnames'] = %w/
@@ -26,4 +19,3 @@ default['wrapper_hostsfile']['loopback_hostnames'] = %w/
     ad.amgdgt.com
   /
 default['wrapper_hostsfile']['append_rest_to_first'] =  false
-

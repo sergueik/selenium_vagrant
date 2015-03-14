@@ -3,7 +3,7 @@ log 'configuring hosts' do
 end
 
 append_rest_to_first = node['wrapper_hostsfile']['append_rest_to_first']
-sut_hosts = node['wrapper_hostsfile']['sut_hosts2'] 
+sut_hosts = node['wrapper_hostsfile']['sut_hosts'] 
 loopback_hostnames = node['wrapper_hostsfile']['loopback_hostnames'] 
 
 if append_rest_to_first
