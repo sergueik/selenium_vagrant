@@ -82,6 +82,7 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
       chef.add_recipe 'vnc'
       chef.add_recipe 'selenium_hub'
       chef.add_recipe 'selenium_node'
+      chef.add_recipe 'firebug'
       chef.log_level = 'info' 
     end 
   else 
