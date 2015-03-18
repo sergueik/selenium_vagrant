@@ -6,8 +6,6 @@ end
 account_username = node['vnc']['account_username'];
 account_home     = "/home/#{account_username}";
 selenium_home = "#{account_home}/selenium"
-account_home     = "/home/#{account_username}";
-selenium_home = "#{account_home}/selenium"
 selenium_version  = node['selenium']['selenium']['version']
 standalone_script = 'run-hub.sh'
 # display_port = node['vnc']['display_port'] 

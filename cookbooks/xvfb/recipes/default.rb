@@ -3,7 +3,8 @@ log 'Installing XvbfServer' do
 end
 
 # Define variables for attributes
-account_username = node['vnc']['account_username'];
+# account_username = node['selenium']['account_username'];
+ account_username = node['xvfb']['account_username'];
 
 # Install xvfb
 package 'xvfb' do
