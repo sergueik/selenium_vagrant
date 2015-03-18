@@ -1,0 +1,18 @@
+---
+driver:
+  name: vagrant
+
+provisioner:
+  name: chef_solo
+
+platforms:
+# TODO : enforce kitchen to use existing Vagantfile patforms
+#  - name: trusty32
+# e.g. 
+  - name: ubuntu-14.04-i386
+
+suites:
+  - name: default
+    run_list:
+     - recipe[xvfb::default]
+    attributes:
