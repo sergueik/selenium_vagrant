@@ -6,7 +6,7 @@ set -e
 
 SELENIUM_USER="<%= @user_name %>"
 SELENIUM_HOME="<%= @selenium_home %>"
-SERVICE_NAME='selenium'
+SERVICE_NAME='selenium_node'
 PATH=/sbin:/usr/sbin:/bin:/usr/bin
 # This assumes no other version was installed already
 PATH=$PATH:${SELENIUM_HOME}/firefox
@@ -15,6 +15,7 @@ DEFAULTS="/etc/default/${SERVICE_NAME}"
 INITSCRIPT="$(basename "$0")"
 JOB="${INITSCRIPT%.sh}"
 JAR_FILENAME='selenium-server-standalone.jar'
+export NODE_HOST=`hostname`
 export NODE_PORT=<%= @node_port %>
 export HUB_IP_ADDRESS=<%= @hub_ip %>
 export HUB_PORT=<%= @hub_port %>
@@ -37,6 +38,7 @@ SELENIUM_ARGS=`cat<<END_ARGS
 -Dlog4j.configuration=file:${SELENIUM_HOME}/<%= @log4j_properties_file %> \
 org.openqa.grid.selenium.GridLauncher \
 -role $ROLE \
+-host $NODE_HOST \
 -port $NODE_PORT \
 -hub http://${HUB_IP_ADDRESS}:${HUB_PORT}/hub/register \
 -nodeConfig $NODE_CONFIG  \
@@ -79,7 +81,7 @@ stop() {
 
 status() {
     if [ -e $PIDFILE ]; then
-        status_of_proc -p $PIDFILE $DAEMON "$SERVICE_NAME process" && exit 0 || exit $?
+        status_of_proc -p $PIDFILE dummy "$SERVICE_NAME process" && exit 0 || exit $?
     else
         log_daemon_msg "$SERVICE_NAME: Process is not running."
         log_end_msg 0

@@ -9,6 +9,7 @@ export HUB_IP_ADDRESS=<%= @hub_ip %>
 export HUB_PORT=<%= @hub_port %>
 export SELENIUM_JAR_VERSION=2.44.0 # currently unused
 export DISPLAY_PORT=<%= @display_port %>
+export NODE_HOST=`hostname`
 export ROLE=node
 
 usage() { cat<<END_OF_USAGE;exit 1; 
