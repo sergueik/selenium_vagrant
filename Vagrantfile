@@ -1,9 +1,6 @@
 # -*- mode: ruby -*-
 # vi: set ft=ruby :
 
-# see also https://github.com/yandex-qatools/chef-selenium
-# http://stackoverflow.com/questions/16879469/using-a-chef-recipe-to-append-multiple-lines-to-a-config-file
-
 VAGRANTFILE_API_VERSION = '2'
 
 vagrant_use_proxy = ENV['VAGRANT_USE_PROXY'].to_i 
@@ -29,29 +26,28 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
     end 
   end
 
-  # do  not use precise32 or raring32:
-  # Vagrant gets the error
-  # apt-get update -y -qq
-  # W: Failed to fetch http://security.ubuntu.com/ubuntu/dists/raring-security/main/source/Sources  404  Not Found
-  # W: Failed to fetch http://security.ubuntu.com/ubuntu/dists/precise-security/universe/i18n/Translation-en_US  Unable to connect to security.ubuntu.com:http: [IP: 91.189.91.24 80]
-  # ...
-  # E: Some index files failed to download. They have been ignored, or old ones used instead.
+
+
+  # config.vm.box_url = 'file:///home/sergueik/Downloads/centos-6.5-x86_64.box' 
+  # config.vm.box_url = 'file://c:/Users/sergueik/Downloads/centos-6.5-x86_64.box'
+  # config.vm.box = 'centos65'
 
   config.vm.box_url = 'file:///home/sergueik/Downloads/trusty-server-cloudimg-i386-vagrant-disk1.box' 
   #  config.vm.box_url = 'file://c:/Users/sergueik/Downloads/trusty-server-cloudimg-i386-vagrant-disk1.box' 
-  # config.vm.box_url = 'http://files.vagrantup.com/precise64.box' 
   config.vm.box = 'ubuntu/trusty32'
 
-  # config.vm.box_url = 'file:///media/Data/Vagrant/IE10.Win7.For.Vagrant.box' 
-  # config.vm.box = 'IE10_W7'
+  # config.vm.box_url = 'file:///home/sergueik/Downloads/vagrant-win7-ie10-updated.box' 
+  # config.vm.box_url = 'file://c:/Users/sergueik/Downloads/vagrant-win7-ie10-updated.box'
+
+  # config.vm.box = 'windows7'
   # https://gist.github.com/uchagani/48d25871e7f306f1f8af
   # https://groups.google.com/forum/#!topic/vagrant-up/PpRelVs95tM 
-  if config.vm.box =~ /ubuntu|redhat|debian/ 
+
+  if config.vm.box =~ /ubuntu|redhat|debian|centos/ 
     config.vm.network 'forwarded_port', guest: 5901, host: 5901, id: 'vnc'
     config.vm.host_name = 'vagrant-chef'
   else
     config.vm.communicator = 'winrm'
-    # Admin user name and password. Note that it was changed
     config.winrm.username = 'vagrant'
     config.winrm.password = 'vagrant'
     config.vm.guest = :windows
@@ -71,22 +67,45 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
     v.cpus = 1 
     v.gui = false
   end
+
+  case config.vm.box.to_s 
   # Linux node recipes
-  if config.vm.box =~ /ubuntu|redhat|debian/ 
+   when /ubuntu|debian/ 
 
     config.vm.provision :chef_solo do |chef|
       chef.data_bags_path = 'data_bags'
       chef.add_recipe 'wrapper_java'
       chef.add_recipe 'wrapper_hostsfile'
+      chef.add_recipe 'selenium'
       chef.add_recipe 'xvfb'
       chef.add_recipe 'vnc'
       chef.add_recipe 'selenium_hub'
       chef.add_recipe 'selenium_node'
       chef.add_recipe 'firebug'
       chef.log_level = 'info' 
-    end 
-  else 
+    end
+  when /centos/ 
+    # use shell provisioner
+    # Turn off firewall
+    config.vm.provision "shell", inline: "chkconfig iptables off"
+ 
+    # Provision update yum repositories
+    config.vm.provision "shell", inline: "sudo yum -y update"
 
+    # Provision new glibc
+    config.vm.provision "shell", inline: "sudo yum -y install glibc.i686"
+    
+    # Provision misc tools
+    config.vm.provision "shell", inline: "sudo yum install -y vim man-1.6f-32.el6 git-1.7.1-3.el6_4.1 wget-1.12-1.8.el6"
+    
+    # Provision Grab "Development Tools" for needed for compiling software from sources
+    config.vm.provision "shell", inline: 'sudo yum -y groupinstall "Development Tools"'
+ 
+    # Provision GNU screen
+    config.vm.provision "shell", inline: "sudo yum -y install screen-4.0.3-16.el6"
+ 
+  else 
+  # Windows node recipes
   config.vm.provision :chef_solo do |chef|
     chef.data_bags_path = 'data_bags'
     chef.add_recipe 'base'
