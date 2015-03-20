@@ -104,19 +104,26 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
     # Provision GNU screen
     config.vm.provision "shell", inline: "sudo yum -y install screen-4.0.3-16.el6"
  
+    # Adding the EPEL
+    config.vm.provision "shell", inline: "sudo yum -y install epel-release-6-8.noarch"
+
+    # Provision Latest Docker
+    config.vm.provision "shell", inline: "sudo yum -y install docker-io"
+
+    # Add Artifactory Docker Registry
+    # config.vm.provision "file", source: ".dockercfg", destination: "~/.dockercfg" 
   else 
   # Windows node recipes
-  config.vm.provision :chef_solo do |chef|
-    chef.data_bags_path = 'data_bags'
-    chef.add_recipe 'base'
-    chef.add_recipe 'windows'
-    chef.add_recipe 'powershell'
-    chef.add_recipe 'sample'
-    # https://github.com/dhoer/chef-selenium
-    # https://github.com/dhoer/chef-nssm
-    chef.add_recipe 'chef-selenium'
-    chef.add_recipe 'chef-nssm'
-    
-  end
+    config.vm.provision :chef_solo do |chef|
+      chef.data_bags_path = 'data_bags'
+      chef.add_recipe 'base'
+      chef.add_recipe 'windows'
+      chef.add_recipe 'powershell'
+      chef.add_recipe 'sample'
+      # https://github.com/dhoer/chef-selenium
+      # https://github.com/dhoer/chef-nssm
+      chef.add_recipe 'chef-selenium'
+      chef.add_recipe 'chef-nssm'
+    end
   end
 end
