@@ -76,6 +76,7 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
       chef.data_bags_path = 'data_bags'
       chef.add_recipe 'wrapper_java'
       chef.add_recipe 'wrapper_hostsfile'
+      chef.add_recipe 'tweak_proxy_settings'
       chef.add_recipe 'selenium'
       chef.add_recipe 'xvfb'
       chef.add_recipe 'vnc'
