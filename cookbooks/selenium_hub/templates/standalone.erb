@@ -1,12 +1,13 @@
 #!/bin/bash
 # This is the standalone launcher script for hub it is listening to 4444
 export HUB_PORT=4444
-export SELENIUM_JAR_VERSION=2.43.1
+export JAR_FILENAME='<%= @jar_filename %>'
+export SELENIUM_JAR_VERSION=2.44
 if [ $VERIFY_SELENIUM_JAR_VERSION ] 
 then 
 # This code verifies that selenium jar of the correct version is linked to 
 # simply selenium-sever-standalone.jar
-/bin/readlink selenium-server-standalone.jar | grep -in $SELENIUM_JAR_VERSION
+/bin/readlink ${JAR_FILENAME} | grep -in $SELENIUM_JAR_VERSION
 if [ $? != 0 ]
 then 
 echo "The Selenium version is incorrect: need version '$SELENIUM_JAR_VERSION'"
@@ -28,4 +29,4 @@ fi
 # This is options for java runtime.
 export LAUNCHER_OPTS='-XX:MaxPermSize=256M -Xmn128M -Xms256M -Xmx256M'
 
-java $LAUNCHER_OPTS -Dlog4j.configuration=/root/hub.log4j.properties -cp log4j-1.2.17.jar:selenium-server-standalone.jar:log4j.xml:log4j.properties org.openqa.grid.selenium.GridLauncher -role hub  -port $HUB_PORT &
+java $LAUNCHER_OPTS -Dlog4j.configuration=/root/hub.log4j.properties -cp log4j-1.2.17.jar:${JAR_FILENAME}:log4j.xml:log4j.properties org.openqa.grid.selenium.GridLauncher -role hub  -port $HUB_PORT &

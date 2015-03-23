@@ -6,15 +6,16 @@ end
 account_username = node['vnc']['account_username'];
 account_home     = "/home/#{account_username}";
 selenium_home = "#{account_home}/selenium"
+account_home     = "/home/#{account_username}";
+selenium_home = "#{account_home}/selenium"
 selenium_version  = node['selenium']['selenium']['version']
 standalone_script = 'run-hub.sh'
 # display_port = node['vnc']['display_port'] 
 display_port = node['xvfb']['display_port']
-
 log4j_properties_file = 'hub.log4j.properties'
 logfile = 'hub.log'
 logger = 'INFO'
-jar_filename = 'selenium-server-standalone.jar'
+jar_filename = 'selenium.jar'
 
 %w{selenium_hub}.each do |init_script| 
 
@@ -30,13 +31,12 @@ jar_filename = 'selenium-server-standalone.jar'
   template ("/etc/init.d/#{init_script}") do 
     source 'initscript.erb'
     variables(
-        :user_name => account_username,
-	:selenium_home => selenium_home,
-        :log4j_properties_file =>log4j_properties_file ,
-	:hub_ip => node['selenium_node']['hub_ip'], 
-	:hub_port => node['selenium_node']['hub_port'], 
-	:node_port => node['selenium_node']['node_port'],
-	:display_port => display_port
+      :user_name => account_username,
+      :selenium_home => selenium_home,
+      :log4j_properties_file =>log4j_properties_file ,
+      :hub_ip => node['selenium_node']['hub_ip'], 
+      :hub_port => node['selenium_node']['hub_port'],
+      :jar_filename  => jar_filename 
     ) 
     owner 'root'
     group 'root'
@@ -61,9 +61,8 @@ template ("#{selenium_home}/#{standalone_script}") do
     :selenium_home => selenium_home,
     :log4j_properties_file =>log4j_properties_file ,
     :hub_ip => node['selenium_node']['hub_ip'], 
-    :hub_port => node['selenium_node']['hub_port'], 
-    :node_port => node['selenium_node']['node_port'],
-    :display_port => display_port,
+    :hub_port => node['selenium_node']['hub_port'],
+    :jar_filename  => jar_filename 
     ) 
   owner account_username
   group account_username

@@ -9,12 +9,14 @@ account_home = "/home/#{account_username}";
 selenium_home = "#{account_home}/selenium"
 selenium_version = node['selenium']['selenium']['version']
 standalone_script = 'run-node.sh'
+display_port = node['selenium_node']['display_port'] 
 display_port = node['xvfb']['display_port']
-jar_filename = 'selenium-server-standalone.jar'
+jar_filename = 'selenium.jar'
 log4j_properties_file = 'node.log4j.properties'
 logfile = 'node.log'
 logger = 'INFO'
-firefox_local_file = "firefox-#{node['selenium']['firefox']['version']}.tar.bz2" 
+node_host = '127.0.0.1'
+firefox_install_archive = "firefox-#{node['selenium']['firefox']['version']}.tar.bz2" 
 
 # Install Firefox
 if use_default_version
@@ -37,7 +39,7 @@ else
     recursive true
     action :create
   end
-  remote_file "#{account_home}/selenium/#{firefox_local_file}" do
+  remote_file "#{account_home}/selenium/#{firefox_install_archive}" do
     source node['selenium']['firefox']['url']
     action :create_if_missing
     #  will fail with, failure will be ignored 
@@ -52,9 +54,9 @@ else
   bash 'extract_release_archive' do
     cwd ::File.dirname(selenium_home)
     code <<-EOH
-     /usr/bin/wget -O "#{selenium_home}/#{firefox_local_file}" "#{node['selenium']['firefox']['url']}"
+     /usr/bin/wget -O "#{selenium_home}/#{firefox_install_archive}" "#{node['selenium']['firefox']['url']}"
      pushd #{selenium_home}
-     /bin/tar xjvf "#{selenium_home}/#{firefox_local_file}" -C #{selenium_home}
+     /bin/tar xjvf "#{selenium_home}/#{firefox_install_archive}" -C #{selenium_home}
      chown -R #{account_username}:#{account_username} .
 
     EOH
@@ -63,9 +65,7 @@ else
 
 end
 # TODO - generate profile directories
-# http://kb.mozillazine.org/User.js_file
-# http://ilias.ca/archive/userjs
-# http://mamusays.blogspot.com/2013/03/firefox-profile-chef-and-minitest_10.html
+
 %w{selenium_node}.each do |init_script| 
 
   if node[:platform_version].to_i >= 14 
@@ -80,13 +80,15 @@ end
   template ("/etc/init.d/#{init_script}") do 
     source 'initscript.erb'
     variables(
-        :user_name => account_username,
-	:selenium_home => selenium_home,
-        :log4j_properties_file =>log4j_properties_file ,
-	:hub_ip => node['selenium_node']['hub_ip'], 
-	:hub_port => node['selenium_node']['hub_port'], 
-	:node_port => node['selenium_node']['node_port'],
-	:display_port => display_port, 
+      :user_name => account_username,
+      :selenium_home => selenium_home,
+      :log4j_properties_file =>log4j_properties_file ,
+      :hub_ip => node['selenium_node']['hub_ip'], 
+      :hub_port => node['selenium_node']['hub_port'], 
+      :node_host => node_host,
+      :node_port => node['selenium_node']['node_port'],
+      :display_port => display_port, 
+      :jar_filename  => jar_filename 
     ) 
     owner account_username
     group account_username
@@ -113,8 +115,10 @@ template ("#{selenium_home}/#{standalone_script}") do
     :log4j_properties_file =>log4j_properties_file ,
     :hub_ip => node['selenium_node']['hub_ip'], 
     :hub_port => node['selenium_node']['hub_port'], 
+    :node_host => node_host,
     :node_port => node['selenium_node']['node_port'],
     :display_port => display_port,
+    :jar_filename  => jar_filename 
     ) 
   owner account_username
   group account_username
@@ -132,8 +136,8 @@ end
 template "#{selenium_home}/node.json" do
   source 'node.json.erb'
   variables(
-     # NOTE: do not use :platform
-     :my_platform => node['selenium_node']['my_platform']
+    :my_platform => node['selenium_node']['my_platform'],
+    :node_host => node_host
   )
   owner account_username
   group account_username

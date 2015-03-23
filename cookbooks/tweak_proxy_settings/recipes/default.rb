@@ -17,12 +17,12 @@ bash 'comment_proxy' do
   cwd ::File.dirname(config_file)
   code <<-EOH
 
-export CONFIG_FILE="#{config_file}"
-
-sed -i.BAK 's/^\\(HTTPS*_PROXY=\\)/# \\1/i' ${CONFIG_FILE}
+CONFIG="#{config_file}"
+echo sed -i.BAK 's/^\(HTTPS*_PROXY=\)/# \1/i' ${CONFIG}
+sed -i.BAK 's/^\(HTTPS*_PROXY=\)/# \1/i' ${CONFIG}
 
     EOH
-  only_if { ::File.exists?(config_file) }
+  only_if { ::File.exists?( config_file  ) }
 end
 
 end 

@@ -4,12 +4,13 @@
 # it has option parameter to specify port
 # This allows run two or more nodes on separate displays
 
+export NODE_HOST=<%= @node_host %>
 export NODE_PORT=<%= @node_port %>
 export HUB_IP_ADDRESS=<%= @hub_ip %>
 export HUB_PORT=<%= @hub_port %>
+export JAR_FILENAME='<%= @jar_filename %>'
 export SELENIUM_JAR_VERSION=2.44.0 # currently unused
 export DISPLAY_PORT=<%= @display_port %>
-export NODE_HOST=`hostname`
 export ROLE=node
 
 usage() { cat<<END_OF_USAGE;exit 1; 
@@ -97,11 +98,11 @@ fi
 
 
 # This code verifies that correct version of selenium jar is linked to 
-# simply selenium-sever-standalone.jar. 
+# simply 
 # The hub and node use similar code to cleanup 
 if [ $VERIFY_SELENIUM_JAR_VERSION ] 
 then 
-/bin/readlink selenium-server-standalone.jar | grep -in $SELENIUM_JAR_VERSION >/dev/null
+/bin/readlink ${JAR_FILENAME} | grep -in $SELENIUM_JAR_VERSION >/dev/null
 if [ $? != 0 ]
 then 
 echo "The Selenium version is incorrect: need version '$SELENIUM_JAR_VERSION'"
@@ -189,7 +190,7 @@ PATH=$PATH:${SELENIUM_HOME}/firefox
 cat <<EEE
 java $JVM_ARGS \
 -classpath \
-$SELENIUM_HOME/log4j-1.2.17.jar:$SELENIUM_HOME/selenium-server-standalone.jar: \
+$SELENIUM_HOME/log4j-1.2.17.jar:$SELENIUM_HOME/${JAR_FILENAME} \
 -Dlog4j.configuration=node.log4j.properties \
 org.openqa.grid.selenium.GridLauncher \
 -role node \
@@ -205,7 +206,7 @@ EEE
 
 java $JVM_ARGS \
 -classpath \
-$SELENIUM_HOME/log4j-1.2.17.jar:$SELENIUM_HOME/selenium-server-standalone.jar: \
+$SELENIUM_HOME/log4j-1.2.17.jar:$SELENIUM_HOME/${JAR_FILENAME} \
 -Dlog4j.configuration=node.log4j.properties \
 org.openqa.grid.selenium.GridLauncher \
 -role node \

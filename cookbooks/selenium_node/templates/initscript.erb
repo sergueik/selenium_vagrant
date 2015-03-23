@@ -4,9 +4,9 @@
 # set -x
 set -e
 
-SELENIUM_USER="<%= @user_name %>"
-SELENIUM_HOME="<%= @selenium_home %>"
-SERVICE_NAME='selenium_node'
+SELENIUM_USER='<%= @user_name %>'
+SELENIUM_HOME='<%= @selenium_home %>'
+SERVICE_NAME='selenium'
 PATH=/sbin:/usr/sbin:/bin:/usr/bin
 # This assumes no other version was installed already
 PATH=$PATH:${SELENIUM_HOME}/firefox
@@ -14,8 +14,7 @@ export PATH
 DEFAULTS="/etc/default/${SERVICE_NAME}"
 INITSCRIPT="$(basename "$0")"
 JOB="${INITSCRIPT%.sh}"
-JAR_FILENAME='selenium-server-standalone.jar'
-export NODE_HOST=`hostname`
+export NODE_HOST=<%= @node_host %>
 export NODE_PORT=<%= @node_port %>
 export HUB_IP_ADDRESS=<%= @hub_ip %>
 export HUB_PORT=<%= @hub_port %>
@@ -23,6 +22,7 @@ export NODE_CONFIG="${SELENIUM_HOME}/node.json"
 export DISPLAY_PORT=<%= @display_port %>
 # export JVM_ARGS='-Xmn128M -Xms256M -Xmx256M'
 export JVM_ARGS='-XX:MaxPermSize=256M -Xmn128M -Xms256M -Xmx256M'
+export JAR_FILENAME='<%= @jar_filename %>'
 export SELENIUM_JAR_VERSION=2.44.0 # currently unused
 export ROLE=node
 
@@ -81,7 +81,7 @@ stop() {
 
 status() {
     if [ -e $PIDFILE ]; then
-        status_of_proc -p $PIDFILE dummy "$SERVICE_NAME process" && exit 0 || exit $?
+        status_of_proc -p $PIDFILE $DAEMON "$SERVICE_NAME process" && exit 0 || exit $?
     else
         log_daemon_msg "$SERVICE_NAME: Process is not running."
         log_end_msg 0
