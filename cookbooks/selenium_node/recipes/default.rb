@@ -65,7 +65,7 @@ else
 
 end
 # TODO - generate profile directories
-
+# currently only works with precise and not with trusty
 %w{selenium_node}.each do |init_script| 
 
   if node[:platform_version].to_i >= 14 
