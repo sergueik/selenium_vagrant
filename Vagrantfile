@@ -117,14 +117,7 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
   # Windows node recipes
     config.vm.provision :chef_solo do |chef|
       chef.data_bags_path = 'data_bags'
-      chef.add_recipe 'base'
-      chef.add_recipe 'windows'
-      chef.add_recipe 'powershell'
-      chef.add_recipe 'sample'
-      # https://github.com/dhoer/chef-selenium
-      # https://github.com/dhoer/chef-nssm
-      chef.add_recipe 'chef-selenium'
-      chef.add_recipe 'chef-nssm'
+      chef.add_recipe 'spoon'
     end
   end
 end
