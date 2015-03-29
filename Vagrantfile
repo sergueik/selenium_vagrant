@@ -32,9 +32,14 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
   # config.vm.box_url = 'file://c:/Users/sergueik/Downloads/centos-6.5-x86_64.box'
   # config.vm.box = 'centos65'
 
-  config.vm.box_url = 'file:///home/sergueik/Downloads/trusty-server-cloudimg-i386-vagrant-disk1.box' 
+  # config.vm.box_url = 'file:///home/sergueik/Downloads/trusty-server-cloudimg-i386-vagrant-disk1.box' 
   #  config.vm.box_url = 'file://c:/Users/sergueik/Downloads/trusty-server-cloudimg-i386-vagrant-disk1.box' 
-  config.vm.box = 'ubuntu/trusty32'
+  # config.vm.box = 'ubuntu/trusty32'
+
+
+  config.vm.box_url = 'file:///home/sergueik/Downloads/precise-server-cloudimg-amd64-vagrant-disk1.box' 
+  #  config.vm.box_url = 'file://c:/Users/sergueik/Downloads/trusty-server-cloudimg-i386-vagrant-disk1.box' 
+  config.vm.box = 'ubuntu/precise64'
 
   # config.vm.box_url = 'file:///home/sergueik/Downloads/vagrant-win7-ie10-updated.box' 
   # config.vm.box_url = 'file://c:/Users/sergueik/Downloads/vagrant-win7-ie10-updated.box'

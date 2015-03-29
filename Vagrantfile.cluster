@@ -1,0 +1,84 @@
+# -*- mode: ruby -*-
+# vi: set ft=ruby :
+# http://www.cyberciti.biz/cloud-computing/use-vagrant-to-create-small-virtual-lab-on-linux-osx/
+VAGRANTFILE_API_VERSION = '2'
+
+vagrant_use_proxy = ENV['VAGRANT_USE_PROXY'].to_i 
+
+Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
+
+  if vagrant_use_proxy == 1 
+
+    http_proxy = nil 
+    if ENV['HTTP_PROXY'] 
+      http_proxy = ENV['HTTP_PROXY'] 
+    end 
+    if http_proxy
+      if Vagrant.has_plugin?('vagrant-proxyconf')
+        config.proxy.http     = http_proxy.gsub('%%','%')
+        config.proxy.https    = http_proxy.gsub('%%','%')
+        config.proxy.no_proxy = 'localhost,127.0.0.1'
+      end
+    end 
+  end
+
+  config.vm.box_url = 'file:///home/sergueik/Downloads/precise-server-cloudimg-amd64-vagrant-disk1.box' 
+  config.vm.box = 'ubuntu/precise64'
+  config.vm.provider 'virtualbox' do |v|
+    v.memory = 256
+    v.cpus = 1 
+    v.gui = false
+  end
+
+  config.vm.network 'private_network', type: 'dhcp'
+  config.hostmanager.enabled = true
+
+  config.hostmanager.ip_resolver = proc do |vm, resolving_vm|
+    if vm.id
+      `VBoxManage guestproperty get #{vm.id} '/VirtualBox/GuestInfo/Net/1/V4/IP'`.split()[1]
+    end
+  end
+
+  config.vm.define :hub do |instance|
+    instance.vm.host_name = 'selenium-hub'
+    instance.vm.network 'forwarded_port', guest: 4444, host: 4444, id: 'selenium', auto_correct:true
+    instance.vm.synced_folder './hub/', '/vagrant', create: true
+    instance.vm.network 'forwarded_port', guest: 80, host: 8080
+
+    instance.vm.provision :chef_solo do |chef|
+      chef.data_bags_path = 'data_bags'
+      chef.add_recipe 'wrapper_java'
+      chef.add_recipe 'wrapper_hostsfile'
+      chef.add_recipe 'tweak_proxy_settings'
+      chef.add_recipe 'selenium'
+      chef.add_recipe 'xvfb'
+      chef.add_recipe 'vnc'
+      chef.add_recipe 'selenium_hub'
+      chef.add_recipe 'selenium_node'
+      chef.add_recipe 'firebug'
+      chef.log_level = 'info' 
+    end
+  end
+ 
+  config.vm.define :node do |instance|
+    # instance.vm.network 'forwarded_port', guest: 5901, host: 5901, id: 'vnc'
+    instance.vm.hostname = 'selenium-node'
+    instance.vm.synced_folder './node/', '/vagrant', create: true
+
+    instance.vm.provision :chef_solo do |chef|
+      chef.data_bags_path = 'data_bags'
+      chef.add_recipe 'wrapper_java'
+      chef.add_recipe 'wrapper_hostsfile'
+      chef.add_recipe 'tweak_proxy_settings'
+      chef.add_recipe 'selenium'
+      chef.add_recipe 'xvfb'
+      chef.add_recipe 'vnc'
+      chef.add_recipe 'selenium_hub'
+      chef.add_recipe 'selenium_node'
+      chef.add_recipe 'firebug'
+      chef.log_level = 'info' 
+    end
+  end
+
+
+end
