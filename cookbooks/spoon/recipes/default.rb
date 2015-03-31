@@ -170,8 +170,10 @@ $name = 'install spoon plugin'
 # install spoon plugin                     N/A                    Running
 # ======================================== ====================== ===============
 #install spoon plugin                     N/A                    Ready
+# & schtasks /Delete /F /TN $name
   EOH
   only_if { ::File.exists?( "#{temp_path}/#{job_xml}" ) }
+  not_if { ::Registry.value_exists?('HKCU\Software\Code Systems\Spoon','Id')}
 end
-
+# stackoverflow.com/questions/26583733/chef-powershell-output-capture-into-attribute-in-latest-chef-12 
 
