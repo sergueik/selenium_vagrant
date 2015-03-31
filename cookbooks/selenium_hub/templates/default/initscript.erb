@@ -13,7 +13,7 @@ PIDFILE='/var/run/hub.pid'
 LOGFILE_DIR='var/log'
 PIDFILE_DIR='/var/run'
 COMMAND="$1"
-export JVM_ARGS='-XX:MaxPermSize=256M -Xmn128M -Xms256M -Xmx256M'
+export JVM_ARGS="-XX:MaxPermSize=256M -Xmn128M -Xms256M -Xmx256M"
 export HUB_PORT=<%= @hub_port %>
 export JAR_FILENAME='<%= @jar_filename %>'
 export SELENIUM_JAR_VERSION=2.44.0 # currently unused
@@ -24,9 +24,9 @@ export ROLE=hub
 export JAVA_HOME='/usr/bin'
 SELENIUM_ARGS=`cat<<END_ARGS
 -classpath ${SELENIUM_HOME}/log4j-1.2.17.jar:${SELENIUM_HOME}/${JAR_FILENAME} \
--Dlog4j.configuration=file:${SELENIUM_HOME}/<%= @log4j_properties_file %> \
+-Dlog4j.configuration=file://${SELENIUM_HOME}/<%= @log4j_properties_file %> \
 org.openqa.grid.selenium.GridLauncher \
--role $ROLE -port $HUB_PORT
+-role ${ROLE} -port ${HUB_PORT}
 END_ARGS
 `
 
@@ -36,10 +36,8 @@ export SELENIUM_ARGS
 . /lib/lsb/init-functions
 
 DAEMON_CMD="/usr/bin/java -- $JVM_ARGS ${SELENIUM_ARGS}"
-# DAEMON_CMD="/usr/bin/java -- $JVM_ARGS -jar ${SELENIUM_HOME}/selenium.jar ${SELENIUM_ARGS}"
 DAEMON_ARGS="--chdir ${SELENIUM_HOME} --quiet --pidfile ${PIDFILE} --user ${SELENIUM_USER}"
 
-# echo $DAEMON_CMD
 start() {
 
     logger "Starting Selenium Grid in ${SERVICE_ROLE} mode..."

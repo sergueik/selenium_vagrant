@@ -27,6 +27,6 @@ kill -HUP $RUNNING_PID
 fi
 
 # This is options for java runtime.
-export LAUNCHER_OPTS='-XX:MaxPermSize=256M -Xmn128M -Xms256M -Xmx256M'
+export JVM_ARGS="-XX:MaxPermSize=256M -Xmn128M -Xms256M -Xmx256M"
 
-java $LAUNCHER_OPTS -Dlog4j.configuration=/root/hub.log4j.properties -cp log4j-1.2.17.jar:${JAR_FILENAME}:log4j.xml:log4j.properties org.openqa.grid.selenium.GridLauncher -role hub  -port $HUB_PORT &
+java $JVM_ARGS -Dlog4j.configuration=file://$(pwd)/hub.log4j.properties -cp log4j-1.2.17.jar:${JAR_FILENAME}:log4j.xml:log4j.properties org.openqa.grid.selenium.GridLauncher -role hub  -port $HUB_PORT &

@@ -114,7 +114,7 @@ template "#{selenium_home}/#{log4j_properties_file}" do
   owner account_username
   group account_username
   action :create_if_missing
-  mode 00600
+  mode 00644
 end
 
 log 'Finished configuring Selenium hub.' do
