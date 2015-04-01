@@ -37,14 +37,14 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
   # config.vm.box = 'ubuntu/trusty32'
 
 
-  config.vm.box_url = 'file:///home/sergueik/Downloads/precise-server-cloudimg-amd64-vagrant-disk1.box' 
-  #  config.vm.box_url = 'file://c:/Users/sergueik/Downloads/trusty-server-cloudimg-i386-vagrant-disk1.box' 
-  config.vm.box = 'ubuntu/precise64'
+  # config.vm.box_url = 'file:///home/sergueik/Downloads/precise-server-cloudimg-amd64-vagrant-disk1.box' 
+  # config.vm.box_url = 'file://c:/Users/sergueik/Downloads/trusty-server-cloudimg-i386-vagrant-disk1.box' 
+  # config.vm.box = 'ubuntu/precise64'
 
-  # config.vm.box_url = 'file:///home/sergueik/Downloads/vagrant-win7-ie10-updated.box' 
+   config.vm.box_url = 'file:///home/sergueik/Downloads/vagrant-win7-ie10-updated.box' 
   # config.vm.box_url = 'file://c:/Users/sergueik/Downloads/vagrant-win7-ie10-updated.box'
 
-  # config.vm.box = 'windows7'
+   config.vm.box = 'windows7'
   # https://gist.github.com/uchagani/48d25871e7f306f1f8af
   # https://groups.google.com/forum/#!topic/vagrant-up/PpRelVs95tM 
 
@@ -70,7 +70,7 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
   config.vm.provider 'virtualbox' do |v|
     v.memory = 1024
     v.cpus = 1 
-    v.gui = false
+    v.gui = true
   end
 
   case config.vm.box.to_s 

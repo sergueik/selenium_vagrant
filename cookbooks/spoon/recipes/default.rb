@@ -159,21 +159,59 @@ powershell "Install Spoon Plugin #{dest_file}" do
   
 code <<-EOH
 $name = 'install spoon plugin'
+# https://github.com/opscode-cookbooks/windows
+# The windows_task LWRP requires Windows Server 2008 due to its API usage.
+# http://blogs.technet.com/b/heyscriptingguy/archive/2013/11/23/using-scheduled-tasks-and-scheduled-jobs-in-powershell.aspx
+
+$name = 'install spoon plugin'
+
 & schtasks /Delete /F /TN $name
+write-output "Starting task '${name}'"
+
 & schtasks /Create /TN $name /XML "#{temp_path}\\#{job_xml}"
 & schtasks /Run /TN $name
-# TODO: Invoke-Expression -Command 
-# TODO: block until
-#
-# schtasks /query /tn "install spoon plugin"
-# ======================================== ====================== ===============
-# install spoon plugin                     N/A                    Running
-# ======================================== ====================== ===============
-#install spoon plugin                     N/A                    Ready
-# & schtasks /Delete /F /TN $name
+write-output "Waiting for status of the task '${name}'"
+start-sleep -second 1
+
+while($true){
+   $status = schtasks /query /TN $name| select-string -pattern "${name}"
+write-output $status
+
+if ($status.tostring() -match '(Running|Ready)'){
+  write-host "${name} is running..."
+  break 
+} else { 
+  write-host "${name} is not yet running..."
+}
+  start-sleep -milliseconds 1000
+}
+
+while($true){
+  $status = schtasks /query /TN $name|select-string  -pattern "${name}"
+if ($status.tostring() -match 'Ready'){
+  write-host "${name} is ready."
+  break 
+} else { 
+  write-host "${name} is not yet ready."
+}
+  start-sleep -milliseconds 1000
+}
+& schtasks /Delete /F /TN $name
+
+$env:PATH="${env:PATH};C:\\Program Files\\Spoon\\Cmd"
+
+& spoon help
+& spoon login kouzmine_serguei@yahoo.com "I/z00mscr"
+# Pull wget tool
+& spoon pull gnu/wget
+
+# Pull the latest Firefox image
+& spoon pull mozilla/firefox:34
+
+# Pull java 
+# spoon pull oracle/jdk:7.65
+
   EOH
   only_if { ::File.exists?( "#{temp_path}/#{job_xml}" ) }
   not_if { ::Registry.value_exists?('HKCU\Software\Code Systems\Spoon','Id')}
 end
-# stackoverflow.com/questions/26583733/chef-powershell-output-capture-into-attribute-in-latest-chef-12 
-
