@@ -229,17 +229,19 @@ code <<-EOH
   only_if  { ::File.exists?( "#{shared_folder}" ) }
 end
 spoon_box_images = %w|
-spoonbrew%2Fbase%3A1
-spoonbrew%2Fie-selenium%3A9
-gnu%2Fwget
-oracle%2Fjre-core%3A8.25
-selenium-server-standalone%3A2.43
+    spoonbrew%2Fbase%3A1
+    spoonbrew%2Fie-selenium%3A9
+    gnu%2Fwget
+    oracle%2Fjre-core%3A8.25
+    selenium-server-standalone%3A2.43
 |
+
 spoon_box_images.each do |spoon_box_image|
-powershell "Importing Spoon Image: #{spoon_box_image}" do
+spoon_image_tag = spoon_box_image.gsub('%3A',':').gsub('%2F','/')
+powershell "Importing Spoon Image: #{spoon_image_tag}" do
 code <<-EOH
 & spoon login #{username} "#{password}"
-spoon import --name=spoonbrew/ie-selenium:9 --overwrite svm #{shared_folder}\\#{spoon_box_image}
+spoon import --name=#{spoon_image_tag} --overwrite svm #{shared_folder}\\#{spoon_box_image}
   EOH
   only_if  { ::File.exists?( "#{shared_folder}\\#{spoon_box_image}" ) }
 end
