@@ -29,8 +29,6 @@ powershell "Download Spoon Plugin #{source_url}" do
   [string]$password = '#{password}'
   [bool]$use_proxy = $false
 
-
-
 # http://poshcode.org/1942
 function assert {
   [CmdletBinding()]
@@ -162,7 +160,7 @@ $name = 'install spoon plugin'
 # https://github.com/opscode-cookbooks/windows
 # The windows_task LWRP requires Windows Server 2008 due to its API usage.
 # http://blogs.technet.com/b/heyscriptingguy/archive/2013/11/23/using-scheduled-tasks-and-scheduled-jobs-in-powershell.aspx
-
+# http://www.geoffhudik.com/tech/2011/10/11/start-scheduled-task-and-wait-on-completion-with-powershell.html
 $name = 'install spoon plugin'
 
 & schtasks /Delete /F /TN $name
@@ -200,18 +198,59 @@ if ($status.tostring() -match 'Ready'){
 
 $env:PATH="${env:PATH};C:\\Program Files\\Spoon\\Cmd"
 
-& spoon help
-& spoon login kouzmine_serguei@yahoo.com "I/z00mscr"
-# Pull wget tool
-& spoon pull gnu/wget
+# & spoon help
+# & spoon login kouzmine_serguei@yahoo.com "I/z00mscr"
+#& spoon pull gnu/wget
 
-# Pull the latest Firefox image
-& spoon pull mozilla/firefox:34
+# Run the latest Firefox image
+#& spoon pull mozilla/firefox:34
+## & spoon pull oracle/jdk:7.65
 
-# Pull java 
-# spoon pull oracle/jdk:7.65
-
+# Start the container
+# spoon run -w="C:\" -d --startup-file=cmd.exe git/git,oracle/jdk7
+# mkdir java & cd java
+# TODO issue wget command for selenium-server-standalone-2.44.0.jar
   EOH
   only_if { ::File.exists?( "#{temp_path}/#{job_xml}" ) }
+  #
   not_if { ::Registry.value_exists?('HKCU\Software\Code Systems\Spoon','Id')}
 end
+
+shared_folder = '\\\\VBOXSVR\\v-csdb-2'
+sample_image_tag = 'gnu/wget'
+powershell "Pulling Spoon Image: #{sample_image_tag}" do
+code <<-EOH
+
+& spoon help
+& spoon login #{username} "#{password}"
+# & spoon login kouzmine_serguei@yahoo.com "I/z00mscr"
+& spoon pull #{sample_image_tag}
+  EOH
+  only_if  { ::File.exists?( "#{shared_folder}" ) }
+end
+spoon_box_images = %w|
+spoonbrew%2Fbase%3A1
+spoonbrew%2Fie-selenium%3A9
+gnu%2Fwget
+oracle%2Fjre-core%3A8.25
+selenium-server-standalone%3A2.43
+|
+spoon_box_images.each do |spoon_box_image|
+powershell "Importing Spoon Image: #{spoon_box_image}" do
+code <<-EOH
+& spoon login #{username} "#{password}"
+spoon import --name=spoonbrew/ie-selenium:9 --overwrite svm #{shared_folder}\\#{spoon_box_image}
+  EOH
+  only_if  { ::File.exists?( "#{shared_folder}\\#{spoon_box_image}" ) }
+end
+
+end
+
+# stackoverflow.com/questions/26583733/chef-powershell-output-capture-into-attribute-in-latest-chef-12 
+# run sample spoon commands: https://spoon.net/docs/getting-started/samples
+# NOTE choose lean images first from https://spoon.net/hub
+# Start the container
+# spoon run -w="C:\" -d --startup-file=cmd.exe git/git,oracle/jdk7
+# mkdir java & cd java
+# https://spoon.net/hub/bharathy89/selenium-Firefox
+# http://www.hurryupandwait.io/blog/windows-containers-package-your-apps-and-bootstrap-your-chef-nodes-with-spoonnet
