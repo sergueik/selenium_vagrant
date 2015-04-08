@@ -9,6 +9,19 @@ dest_file = 'spoon-plugin.exe'
 job_xml   = 'install_spool_plugin.xml'
 temp_path = 'C:\\temp'
 dest_file_path = "#{temp_path}/#{dest_file}"
+shared_folder = '\\\\VBOXSVR\\v-csdb-2'
+sample_image_tag = 'spoonbrew/base:1'
+spoon_box_images = %w|
+
+    spoonbrew%2Fbase%3A1
+    spoonbrew%2Fie-selenium%3A9
+    gnu%2Fwget
+    oracle%2Fjre-core%3A8.25
+    selenium-server-standalone%3A2.43
+    selenium-chrome-driver
+    selenium-ie-driver
+    selenium-grid-plugin%3A201502271240
+|
 
 log "Starting Download #{dest_file}" do
   level :info
@@ -156,13 +169,8 @@ end
 powershell "Install Spoon Plugin #{dest_file}" do
   
 code <<-EOH
-$name = 'install spoon plugin'
-# https://github.com/opscode-cookbooks/windows
-# The windows_task LWRP requires Windows Server 2008 due to its API usage.
-# http://blogs.technet.com/b/heyscriptingguy/archive/2013/11/23/using-scheduled-tasks-and-scheduled-jobs-in-powershell.aspx
-# http://www.geoffhudik.com/tech/2011/10/11/start-scheduled-task-and-wait-on-completion-with-powershell.html
-$name = 'install spoon plugin'
 
+$name = 'install spoon plugin'
 & schtasks /Delete /F /TN $name
 write-output "Starting task '${name}'"
 
@@ -172,87 +180,71 @@ write-output "Waiting for status of the task '${name}'"
 start-sleep -second 1
 
 while($true){
-   $status = schtasks /query /TN $name| select-string -pattern "${name}"
-write-output $status
-
-if ($status.tostring() -match '(Running|Ready)'){
-  write-host "${name} is running..."
-  break 
-} else { 
-  write-host "${name} is not yet running..."
-}
+  $status = schtasks /query /TN $name| select-string -pattern "${name}"
+  write-output $status
+  if ($status.tostring() -match '(Running|Ready)'){
+    write-host "${name} is running..."
+    break 
+  } else { 
+    write-host "${name} is not yet running..."
+  }
   start-sleep -milliseconds 1000
 }
 
 while($true){
   $status = schtasks /query /TN $name|select-string  -pattern "${name}"
-if ($status.tostring() -match 'Ready'){
-  write-host "${name} is ready."
-  break 
-} else { 
-  write-host "${name} is not yet ready."
-}
+  if ($status.tostring() -match 'Ready'){
+    write-host "${name} is ready."
+    break 
+  } else { 
+    write-host "${name} is not yet ready."
+  }
   start-sleep -milliseconds 1000
 }
-& schtasks /Delete /F /TN $name
+  & schtasks /Delete /F /TN $name
 
-$env:PATH="${env:PATH};C:\\Program Files\\Spoon\\Cmd"
 
-# & spoon help
-# & spoon login kouzmine_serguei@yahoo.com "I/z00mscr"
-#& spoon pull gnu/wget
-
-# Run the latest Firefox image
-#& spoon pull mozilla/firefox:34
-## & spoon pull oracle/jdk:7.65
-
-# Start the container
-# spoon run -w="C:\" -d --startup-file=cmd.exe git/git,oracle/jdk7
-# mkdir java & cd java
-# TODO issue wget command for selenium-server-standalone-2.44.0.jar
   EOH
   only_if { ::File.exists?( "#{temp_path}/#{job_xml}" ) }
-  #
+  # detect that spoon is installed
   not_if { ::Registry.value_exists?('HKCU\Software\Code Systems\Spoon','Id')}
 end
 
-shared_folder = '\\\\VBOXSVR\\v-csdb-2'
-sample_image_tag = 'gnu/wget'
 powershell "Pulling Spoon Image: #{sample_image_tag}" do
-code <<-EOH
-
-& spoon help
-& spoon login #{username} "#{password}"
-# & spoon login kouzmine_serguei@yahoo.com "I/z00mscr"
-& spoon pull #{sample_image_tag}
+  code <<-EOH
+  $env:PATH="${env:PATH};C:\\Program Files\\Spoon\\Cmd"
+  & spoon.exe help
+  & spoon.exe login #{username} "#{password}"
+  & spoon.exe pull #{sample_image_tag}
   EOH
   only_if  { ::File.exists?( "#{shared_folder}" ) }
 end
-spoon_box_images = %w|
-    spoonbrew%2Fbase%3A1
-    spoonbrew%2Fie-selenium%3A9
-    gnu%2Fwget
-    oracle%2Fjre-core%3A8.25
-    selenium-server-standalone%3A2.43
-|
 
 spoon_box_images.each do |spoon_box_image|
 spoon_image_tag = spoon_box_image.gsub('%3A',':').gsub('%2F','/')
-powershell "Importing Spoon Image: #{spoon_image_tag}" do
-code <<-EOH
-& spoon login #{username} "#{password}"
-spoon import --name=#{spoon_image_tag} --overwrite svm #{shared_folder}\\#{spoon_box_image}
+  powershell "Importing Spoon Image: #{spoon_image_tag}" do
+    code <<-EOH
+    & spoon.exe login #{username} "#{password}"
+    & spoon.exe import --name=#{spoon_image_tag} --overwrite svm #{shared_folder}\\#{spoon_box_image}
+    EOH
+    only_if  { ::File.exists?( "#{shared_folder}\\#{spoon_box_image}" ) }
+  end
+end
+# TODO: execute through schtasks ?
+powershell 'Launching Spoon Grid' do
+  code <<-EOH
+  & spoon.exe login #{username} "#{password}"
+  & spoon.exe run --detach base,selenium-grid
   EOH
-  only_if  { ::File.exists?( "#{shared_folder}\\#{spoon_box_image}" ) }
+end
+powershell 'Launching Spoon Node' do
+  code <<-EOH
+  & spoon.exe login #{username} "#{password}"
+  & spoon.exe run --detach base,spoonbrew/ie-selenium:9,selenium-grid-node node ie 9 
+  EOH
 end
 
+log 'Done.' do
+  level :info
 end
 
-# stackoverflow.com/questions/26583733/chef-powershell-output-capture-into-attribute-in-latest-chef-12 
-# run sample spoon commands: https://spoon.net/docs/getting-started/samples
-# NOTE choose lean images first from https://spoon.net/hub
-# Start the container
-# spoon run -w="C:\" -d --startup-file=cmd.exe git/git,oracle/jdk7
-# mkdir java & cd java
-# https://spoon.net/hub/bharathy89/selenium-Firefox
-# http://www.hurryupandwait.io/blog/windows-containers-package-your-apps-and-bootstrap-your-chef-nodes-with-spoonnet
