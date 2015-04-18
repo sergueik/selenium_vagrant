@@ -3,10 +3,11 @@
 # This is bare bones standalone script to launch node 
 # it has option parameter to specify port
 # This allows run two or more nodes on separate displays
-
+# NOTE http://www.shellcheck.net/
 export NODE_HOST=<%= @node_host %>
 export NODE_PORT=<%= @node_port %>
 export HUB_IP_ADDRESS=<%= @hub_ip %>
+# this can be the guest or the host ip
 export HUB_PORT=<%= @hub_port %>
 export JAR_FILENAME='<%= @jar_filename %>'
 export SELENIUM_JAR_VERSION=2.44.0 # currently unused
@@ -29,7 +30,7 @@ END_OF_USAGE
 terminate(){
 echo "Terminating the running instance(s):"
 # TODO
-ps ax | grep [j]ava | grep '\-role' | grep $ROLE
+ps ax | grep '[j]ava' | grep '\-role' | grep $ROLE
 echo "This is currently a no-op"
 
 exit 0
@@ -96,7 +97,7 @@ export LOG_FILE=/var/log/node.log
 fi
 
 
-
+# https://github.com/bengardner/uncrustify
 # This code verifies that correct version of selenium jar is linked to 
 # simply 
 # The hub and node use similar code to cleanup 
@@ -110,6 +111,10 @@ ls -l selenium*jar
 exit 0
 fi
 fi
+# Verify hub only works when hub is running locally
+if [ $VERIFY_HUB_PROCESS ]  
+then
+
 # This code detects if hub is already running. This is required, otherwise 
 # the port listener based instance cleanup logic will not work.
 
@@ -122,20 +127,21 @@ else
 echo "Please launch the Selenium hub on ${HUB_PORT} first." 
 exit 1
 fi
+fi
 
 
 # This code detects the already running instances. Only one selenium node can run listening to a given port
 #
 echo "Checking if there is already Selenium process listening to ${NODE_PORT} and terminating"
-netstat -npl | grep $NODE_PORT | awk '{print $7}'| grep '/java'
+netstat -npl | grep ${NODE_PORT} | awk '{print $7}'| grep '/java'
 RUNNING_PID=$(netstat -npl | grep $NODE_PORT | awk '{print $7}'| grep '/java'|head -1 | sed 's/\/.*$//')
 if [ "$RUNNING_PID" != "" ] ; then
 echo killing java $RUNNING_PID
-ps -ocomm -oargs -opid -p $RUNNING_PID
+ps -ocomm -oargs -opid -p ${RUNNING_PID}
 # sending HUP
-kill -HUP $RUNNING_PID
+kill -HUP ${RUNNING_PID}
 sleep 10
-kill $RUNNING_PID
+kill ${RUNNING_PID}
 
 echo "Done."
 fi
@@ -146,7 +152,7 @@ echo Killing firefoxes
 # This code terminates Firefox instances 
 # (unfinished)
 # WARNING - all running will be stopped
-ps ax -opid,comm | grep [f]irefox | tail -1 | awk '{print $1}' | xargs echo kill -1
+ps ax -opid,comm | grep '[f]irefox' | tail -1 | awk '{print $1}' | xargs echo kill -1
 sleep 10
 
 PROFILE=$(grep -Eio 'Path=(.*)' ~/.mozilla/firefox/profiles.ini)
@@ -178,7 +184,7 @@ export DISPLAY=:$DISPLAY_PORT
 Xvfb $DISPLAY -ac >/dev/null 2>&1 &
 SELENIUM_NODE_PID=$!
 # This is options for java runtime.
-export JVM_ARGS='-XX:MaxPermSize=256M -Xmn128M -Xms256M -Xmx256M'
+export JVM_ARGS="-XX:MaxPermSize=256M -Xmn128M -Xms256M -Xmx256M"
 echo "Starting Selenium in the background"
 # This runs the node jar in the background
 
@@ -188,35 +194,35 @@ export NODE_CONFIG="${SELENIUM_HOME}/node.json"
 PATH=$PATH:${SELENIUM_HOME}/firefox
 
 cat <<EEE
-java $JVM_ARGS \
+java ${JVM_ARGS} \
 -classpath \
-$SELENIUM_HOME/log4j-1.2.17.jar:$SELENIUM_HOME/${JAR_FILENAME} \
--Dlog4j.configuration=node.log4j.properties \
+${SELENIUM_HOME}/log4j-1.2.17.jar:${SELENIUM_HOME}/${JAR_FILENAME} \
+-Dlog4j.configuration=file://${SELENIUM_HOME}/node.log4j.properties \
 org.openqa.grid.selenium.GridLauncher \
 -role node \
--host $NODE_HOST \
--port $NODE_PORT \
+-host ${NODE_HOST} \
+-port ${NODE_PORT} \
 -hub http://${HUB_IP_ADDRESS}:${HUB_PORT}/hub/register \
--nodeConfig $NODE_CONFIG  \
+-nodeConfig ${NODE_CONFIG}  \
 -browserTimeout 12000 -timeout 12000 \
 -ensureCleanSession true \
 -trustAllSSLCertificates 
 
 EEE
 
-java $JVM_ARGS \
+java ${JVM_ARGS} \
 -classpath \
-$SELENIUM_HOME/log4j-1.2.17.jar:$SELENIUM_HOME/${JAR_FILENAME} \
--Dlog4j.configuration=node.log4j.properties \
+${SELENIUM_HOME}/log4j-1.2.17.jar:${SELENIUM_HOME}/${JAR_FILENAME} \
+-Dlog4j.configuration=file://${SELENIUM_HOME}/node.log4j.properties \
 org.openqa.grid.selenium.GridLauncher \
 -role node \
--host $NODE_HOST \
--port $NODE_PORT \
+-host ${NODE_HOST} \
+-port ${NODE_PORT} \
 -hub http://${HUB_IP_ADDRESS}:${HUB_PORT}/hub/register \
--nodeConfig $NODE_CONFIG  \
+-nodeConfig ${NODE_CONFIG}  \
 -browserTimeout 12000 -timeout 12000 \
 -ensureCleanSession true \
 -trustAllSSLCertificates &
 
-echo $NODE_PID
-ps ax | grep [j]ava
+echo ${NODE_PID}
+ps ax | grep '[j]ava'
