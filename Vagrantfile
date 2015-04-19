@@ -11,6 +11,7 @@ basedir = basedir.gsub('\\', '/')
 
 box_memory = ENV.fetch('BOX_MEMORY', '1024') 
 box_cpus = ENV.fetch('BOX_CPUS', '1') 
+box_gui = ENV.fetch('BOX_GUI', 'false') 
 
 VAGRANTFILE_API_VERSION = '2'
  
@@ -74,10 +75,14 @@ case box_name
   # Configure common port forwarding
   config.vm.network 'forwarded_port', guest: 4444, host: 4444, id: 'selenium', auto_correct:true
   
-  config.vm.provider 'virtualbox' do |v|
-    v.memory = box_memory
-    v.cpus = box_cpus 
-    v.gui = false
+  config.vm.provider 'virtualbox' do |vb|
+    vb.gui = box_gui
+    vb.customize ['modifyvm', :id, '--cpus', box_cpus ]
+    vb.customize ['modifyvm', :id, '--memory', box_memory ]
+    vb.customize ['modifyvm', :id, '--clipboard', 'bidirectional']
+    vb.customize ['modifyvm', :id, '--accelerate3d', 'off']
+    vb.customize ['modifyvm', :id, '--audio', 'none']
+    vb.customize ['modifyvm', :id, '--usb', 'off']
   end
 
   # Provision software
@@ -101,31 +106,31 @@ case box_name
   when /centos/ 
 
     # Turn off firewall
-    config.vm.provision "shell", inline: "chkconfig iptables off" 
+    config.vm.provision 'shell', inline: 'chkconfig iptables off'
 
     # Provision update yum repositories
-    config.vm.provision "shell", inline: "sudo yum -y update"
+    config.vm.provision 'shell', inline: 'sudo yum -y update'
 
     # Provision new glibc
-    config.vm.provision "shell", inline: "sudo yum -y install glibc.i686"
+    config.vm.provision 'shell', inline: 'sudo yum -y install glibc.i686'
     
     # Provision misc tools
-    config.vm.provision "shell", inline: "sudo yum install -y vim man-1.6f-32.el6 git-1.7.1-3.el6_4.1 wget-1.12-1.8.el6"
+    config.vm.provision 'shell', inline: 'sudo yum install -y vim man-1.6f-32.el6 git-1.7.1-3.el6_4.1 wget-1.12-1.8.el6'
     
     # Provision Grab "Development Tools" for needed for compiling software from sources
-    config.vm.provision "shell", inline: 'sudo yum -y groupinstall "Development Tools"'
+    config.vm.provision 'shell', inline: 'sudo yum -y groupinstall "Development Tools"'
  
     # Provision GNU screen
-    config.vm.provision "shell", inline: "sudo yum -y install screen-4.0.3-16.el6"
+    config.vm.provision 'shell', inline: 'sudo yum -y install screen-4.0.3-16.el6'
  
     # Adding the EPEL
-    config.vm.provision "shell", inline: "sudo yum -y install epel-release-6-8.noarch"
+    config.vm.provision 'shell', inline: 'sudo yum -y install epel-release-6-8.noarch'
 
     # Provision Latest Docker
-    config.vm.provision "shell", inline: "sudo yum -y install docker-io"
+    config.vm.provision 'shell', inline: 'sudo yum -y install docker-io'
 
     # Add Artifactory Docker Registry
-    config.vm.provision "file", source: ".dockercfg", destination: "~/.dockercfg" 
+    config.vm.provision 'file', source: '.dockercfg', destination: '~/.dockercfg'
 
     # Remove and install jdk from locally hosted artifactory repository - unfinished
      config.vm.provision 'shell', inline: <<END_SCRIPT1
@@ -141,7 +146,7 @@ if [ "$STATUS" != "" ] ; then
 export JAVA_YUM_INSTALLED_PACKAGE_VERSION=$(yum list installed | grep jdk|head -1)
 if [ "$JAVA_YUM_INSTALLED_PACKAGE_VERSION" != "" ]; then
 
-# Remove  through yum
+# Remove jdk through yum
 
 yum remove ${YUM_FLAG} "$JAVA_YUM_INSTALLED_PACKAGE_VERSION"
 fi
@@ -154,6 +159,9 @@ END_SCRIPT1
     config.vm.provision :chef_solo do |chef|
       chef.data_bags_path = 'data_bags'
       chef.add_recipe 'spoon'
+      chef.log_level = 'info' 
     end
   end
 end
+
+# VAGRANT_LOG=debug vagrant up > debug.log 2>&1
