@@ -1,24 +1,31 @@
 # -*- mode: ruby -*-
 # vi: set ft=ruby :
 
+# Custom environment settings to enable this Vagrantfile to boot various flavours of Linux or Windows from Linux or Windows host
+vagrant_use_proxy = ENV.fetch('VAGRANT_USE_PROXY', nil)
+http_proxy = ENV.fetch('HTTP_PROXY', nil) 
+box_name = ENV.fetch('BOX_NAME', 'ubuntu/precise64') 
+basedir =  ENV.fetch('USERPROFILE', '')  
+basedir  = ENV.fetch('HOME', '') if basedir == ''
+basedir = basedir.gsub('\\', '/')
+
+box_memory = ENV.fetch('BOX_MEMORY', '1024') 
+box_cpus = ENV.fetch('BOX_CPUS', '1') 
+
 VAGRANTFILE_API_VERSION = '2'
-
-vagrant_use_proxy = ENV['VAGRANT_USE_PROXY'].to_i 
-
+ 
 Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
+  # Configure Proxy authentication
 
-  if vagrant_use_proxy == 1 
-
-    http_proxy = nil 
-    if ENV['HTTP_PROXY'] 
-      http_proxy = ENV['HTTP_PROXY'] 
-    end 
+  if vagrant_use_proxy
     if http_proxy
+    
       if Vagrant.has_plugin?('vagrant-proxyconf')
+        # Windows-specific case
+        # A proxy should be specified in the form of http://[user:pass@]host:port.
+        # without the domain part and with percent signs doubled - Vagrant and Ruby still use batch files on Windows
         # https://github.com/tmatilai/vagrant-proxyconf
         # https://github.com/WinRb/vagrant-windows
-        # A proxy should be specified in the form of http://[user:pass@]host:port.
-        # without the domain part
         config.proxy.http     = http_proxy.gsub('%%','%')
         config.proxy.https    = http_proxy.gsub('%%','%')
         config.proxy.no_proxy = 'localhost,127.0.0.1'
@@ -26,31 +33,30 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
     end 
   end
 
-
-
-  # config.vm.box_url = 'file:///home/sergueik/Downloads/centos-6.5-x86_64.box' 
-  # config.vm.box_url = 'file://c:/Users/sergueik/Downloads/centos-6.5-x86_64.box'
-  # config.vm.box = 'centos65'
-
-  # config.vm.box_url = 'file:///home/sergueik/Downloads/trusty-server-cloudimg-i386-vagrant-disk1.box' 
-  #  config.vm.box_url = 'file://c:/Users/sergueik/Downloads/trusty-server-cloudimg-i386-vagrant-disk1.box' 
-  # config.vm.box = 'ubuntu/trusty32'
-
-
-  # config.vm.box_url = 'file:///home/sergueik/Downloads/precise-server-cloudimg-amd64-vagrant-disk1.box' 
-  # config.vm.box_url = 'file://c:/Users/sergueik/Downloads/trusty-server-cloudimg-i386-vagrant-disk1.box' 
-  # config.vm.box = 'ubuntu/precise64'
-
-   config.vm.box_url = 'file:///home/sergueik/Downloads/vagrant-win7-ie10-updated.box' 
-  # config.vm.box_url = 'file://c:/Users/sergueik/Downloads/vagrant-win7-ie10-updated.box'
-
-   config.vm.box = 'windows7'
-  # https://gist.github.com/uchagani/48d25871e7f306f1f8af
-  # https://groups.google.com/forum/#!topic/vagrant-up/PpRelVs95tM 
-
+# Locate the box
+case box_name 
+   when /centos65/ 
+     config.vm.box_url = "file://#{basedir}/Downloads/centos-6.5-x86_64.box"
+     config.vm.box = 'centos65'
+   when /trusty32/ 
+     config.vm.box_url = "file://#{basedir}/Downloads/trusty-server-cloudimg-i386-vagrant-disk1.box"
+     config.vm.box = 'ubuntu/trusty32'
+   when /precise64/ 
+     config.vm.box_url = "file://#{basedir}/Downloads/precise-server-cloudimg-amd64-vagrant-disk1.box"
+     config.vm.box = 'ubuntu/precise64'
+  else 
+     # For Windows use tweaked modern.ie box
+     # To change Windows into a vagrant manageable box see
+     # https://gist.github.com/uchagani/48d25871e7f306f1f8af
+     # https://groups.google.com/forum/#!topic/vagrant-up/PpRelVs95tM 
+     config.vm.box_url = "file://#{basedir}/Downloads/vagrant-win7-ie10-updated.box"
+     config.vm.box = 'windows7'
+  end
+  # Configure guest-specific port forwarding
   if config.vm.box =~ /ubuntu|redhat|debian|centos/ 
-    config.vm.network 'forwarded_port', guest: 5901, host: 5901, id: 'vnc'
+    config.vm.network 'forwarded_port', guest: 5901, host: 5901, id: 'vnc', auto_correct: true
     config.vm.host_name = 'vagrant-chef'
+    config.vm.synced_folder './' , '/vagrant', disabled: true
   else
     config.vm.communicator = 'winrm'
     config.winrm.username = 'vagrant'
@@ -58,31 +64,32 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
     config.vm.guest = :windows
     config.windows.halt_timeout = 15
     config.vm.network :forwarded_port, guest: 3389, host: 3389, id: 'rdp', auto_correct: true
-    config.vm.network :forwarded_port, guest: 22, host: 2222, id: 'ssh', auto_correct: true
     config.vm.network :forwarded_port, guest: 5985, host: 5985, id: 'winrm', auto_correct:true
     config.vm.host_name = 'windows7'
     config.vm.boot_timeout = 120
-    # Ensure that all networks are set to private
+    # Ensure that all networks are set to 'private'
     config.windows.set_work_network = true
+    # on Windows, use default data_bags share
   end
+  # Configure common port forwarding
   config.vm.network 'forwarded_port', guest: 4444, host: 4444, id: 'selenium', auto_correct:true
-  config.vm.synced_folder './' , '/vagrant', disabled: true
+  
   config.vm.provider 'virtualbox' do |v|
-    v.memory = 1024
-    v.cpus = 1 
-    v.gui = true
+    v.memory = box_memory
+    v.cpus = box_cpus 
+    v.gui = false
   end
 
+  # Provision software
   case config.vm.box.to_s 
-  # Linux node recipes
+   # Use chef provisioner with ubuntu
    when /ubuntu|debian/ 
-
     config.vm.provision :chef_solo do |chef|
       chef.data_bags_path = 'data_bags'
       chef.add_recipe 'wrapper_java'
       chef.add_recipe 'wrapper_hostsfile'
       chef.add_recipe 'tweak_proxy_settings'
-      chef.add_recipe 'selenium'
+      # TODO - choose which X server to install
       chef.add_recipe 'xvfb'
       chef.add_recipe 'vnc'
       chef.add_recipe 'selenium_hub'
@@ -90,11 +97,12 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
       chef.add_recipe 'firebug'
       chef.log_level = 'info' 
     end
+  # Use shell provisioner with centos
   when /centos/ 
-    # use shell provisioner
+
     # Turn off firewall
-    config.vm.provision "shell", inline: "chkconfig iptables off"
- 
+    config.vm.provision "shell", inline: "chkconfig iptables off" 
+
     # Provision update yum repositories
     config.vm.provision "shell", inline: "sudo yum -y update"
 
@@ -117,9 +125,32 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
     config.vm.provision "shell", inline: "sudo yum -y install docker-io"
 
     # Add Artifactory Docker Registry
-    # config.vm.provision "file", source: ".dockercfg", destination: "~/.dockercfg" 
+    config.vm.provision "file", source: ".dockercfg", destination: "~/.dockercfg" 
+
+    # Remove and install jdk from locally hosted artifactory repository - unfinished
+     config.vm.provision 'shell', inline: <<END_SCRIPT1
+ 
+export YUM_FLAG=-y
+
+export JAVA_VERSION=$(java -version 2>& 1| head -1)
+STATUS=$(expr "$JAVA_VERSION" : 'java version "\\(.*\\)"')
+if [ "$STATUS" != "" ] ; then
+# TODO - stop if the desired Java version / flavour is already present
+
+# java is present on the box -  remove it
+export JAVA_YUM_INSTALLED_PACKAGE_VERSION=$(yum list installed | grep jdk|head -1)
+if [ "$JAVA_YUM_INSTALLED_PACKAGE_VERSION" != "" ]; then
+
+# Remove  through yum
+
+yum remove ${YUM_FLAG} "$JAVA_YUM_INSTALLED_PACKAGE_VERSION"
+fi
+fi
+
+END_SCRIPT1
+  # For Windows use Chef and Powershell provisioner - unfinished
   else 
-  # Windows node recipes
+    
     config.vm.provision :chef_solo do |chef|
       chef.data_bags_path = 'data_bags'
       chef.add_recipe 'spoon'
