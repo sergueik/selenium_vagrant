@@ -9,8 +9,11 @@ account_home = "/home/#{account_username}";
 selenium_home = "#{account_home}/selenium"
 selenium_version = node['selenium']['selenium']['version']
 standalone_script = 'run-node.sh'
-display_port = node['selenium_node']['display_port'] 
+
+# TODO - choose which X server to install
+# display_port = node['vnc']['display_port'] 
 display_port = node['xvfb']['display_port']
+
 jar_filename = 'selenium.jar'
 log4j_properties_file = 'node.log4j.properties'
 logfile = 'node.log'
@@ -64,12 +67,13 @@ else
   end
 
 end
-# TODO - generate profile directories
+
+# TODO - generate Firefox Profile directories
 # currently only works with precise and not with trusty
 %w{selenium_node}.each do |init_script| 
 
-  if node[:platform_version].to_i >= 14 
-    # Create selenium node service script configuratrion required for provider.
+  # Create Selenium Node service script configuratrion required for provider.
+  if node[:platform_version].to_i >= 14   
     file "/etc/init/#{init_script}.conf"  do
       owner 'root'
       group 'root'
@@ -77,6 +81,8 @@ end
       action :create_if_missing
     end
   end
+
+  # Create service init script for Selenium Node
   template ("/etc/init.d/#{init_script}") do 
     source 'initscript.erb'
     variables(
@@ -96,7 +102,7 @@ end
   end 
 end
 
-# Create selenium node folder
+# Create Selenium Node folder
 directory selenium_home do
   owner account_username
   group account_username
@@ -105,8 +111,9 @@ directory selenium_home do
   action :create
 end
 
-# Workaround Net::HTTPServerException 407 Forefront TMG Proxy issue 
-# Create selenium node standalone launcher script.
+# TODO: apply proxy issue workaround
+
+# Create standalone launcher script for debugging Selenium Node issues
 template ("#{selenium_home}/#{standalone_script}") do 
   source 'standalone.erb'
   variables(
@@ -133,9 +140,11 @@ remote_file "#{selenium_home}/#{jar_filename}" do
   owner account_username
 end
 
+# Create Selenium Node configuration file
 template "#{selenium_home}/node.json" do
   source 'node.json.erb'
   variables(
+    # NOTE: do not use :platform
     :my_platform => node['selenium_node']['my_platform'],
     :node_host => node_host
   )
@@ -144,7 +153,7 @@ template "#{selenium_home}/node.json" do
   mode 00644
 end
  
-# Start Selenium server and client
+# Start Selenium Node service
 %w{selenium_node}.each do |service_name|
   service service_name do
     unless node[:platform_version].to_i < 14 
@@ -162,7 +171,6 @@ end
 template "#{selenium_home}/#{log4j_properties_file}" do
   source 'log4j_properties.erb'
   variables(
-     # NOTE: do not use :platform
      :logger => logger,
      :logfile => logfile
   )
@@ -172,7 +180,7 @@ template "#{selenium_home}/#{log4j_properties_file}" do
   mode 00644
 end
 
-log 'Finished configuring Selenium node.' do
+log 'Finished configuring Selenium Node.' do
   level :info
 end
 

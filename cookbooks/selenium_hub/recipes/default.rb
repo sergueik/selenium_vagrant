@@ -10,8 +10,6 @@ account_home     = "/home/#{account_username}";
 selenium_home = "#{account_home}/selenium"
 selenium_version  = node['selenium']['selenium']['version']
 standalone_script = 'run-hub.sh'
-# display_port = node['vnc']['display_port'] 
-display_port = node['xvfb']['display_port']
 log4j_properties_file = 'hub.log4j.properties'
 logfile = 'hub.log'
 logger = 'INFO'
@@ -28,6 +26,7 @@ jar_filename = 'selenium.jar'
       action :create_if_missing
     end
   end
+  # Create service init script for Selenium Hub
   template ("/etc/init.d/#{init_script}") do 
     source 'initscript.erb'
     variables(
@@ -44,7 +43,7 @@ jar_filename = 'selenium.jar'
   end 
 end
 
-# Create selenium folder
+# Create Selenium folder
 directory selenium_home do
   owner account_username
   group account_username
@@ -53,7 +52,7 @@ directory selenium_home do
   action :create
 end
 
-# Create selenium hub standalone launcher script.
+# Create standalone launcher script for debugging Selenium Hub
 template ("#{selenium_home}/#{standalone_script}") do 
   source 'standalone.erb'
   variables(
@@ -70,12 +69,12 @@ template ("#{selenium_home}/#{standalone_script}") do
 end 
 
 
-# Install selenium jar
+# Install Selenium jar
 remote_file "#{selenium_home}/#{jar_filename}" do
   source node['selenium']['selenium']['url']
   action :create_if_missing
   ignore_failure true
-  # TODO: version !
+  # TODO: ensure specific version
   owner account_username
 end
 
@@ -88,7 +87,7 @@ bash 'extract_jar' do
   not_if { ::File.exists?("#{selenium_home}/#{jar_filename}") }
 end
 
-# Start the service 
+# Start the Selenium Hub service 
 %w{selenium_hub}.each do |service_name|
   service service_name do
     # NOTE: Init replace with Upstart for 14.04
@@ -107,7 +106,6 @@ end
 template "#{selenium_home}/#{log4j_properties_file}" do
   source 'log4j_properties.erb'
   variables(
-     # NOTE: do not use :platform
      :logger => logger,
      :logfile => logfile
   )
@@ -117,6 +115,6 @@ template "#{selenium_home}/#{log4j_properties_file}" do
   mode 00644
 end
 
-log 'Finished configuring Selenium hub.' do
+log 'Finished configuring Selenium Hub.' do
   level :info
 end
