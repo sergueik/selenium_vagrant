@@ -11,16 +11,23 @@ temp_path = 'C:\\temp'
 dest_file_path = "#{temp_path}/#{dest_file}"
 shared_folder = '\\\\VBOXSVR\\v-csdb-2'
 sample_image_tag = 'spoonbrew/base:1'
-spoon_box_images = %w|
+import_shared_images = false
+import_browser_images = false
 
+spoon_shared_images = %w|
     spoonbrew%2Fbase%3A1
-    spoonbrew%2Fie-selenium%3A9
     gnu%2Fwget
     oracle%2Fjre-core%3A8.25
     selenium-server-standalone%3A2.43
     selenium-chrome-driver
     selenium-ie-driver
     selenium-grid-plugin%3A201502271240
+|
+
+spoon_box_browser_images = %w|
+    spoonbrew%2Fie-selenium%3A9
+    spoonbrew%2Fie-selenium%3A10
+    spoonbrew%2Fie-selenium%3A11
 |
 
 log "Starting Download #{dest_file}" do
@@ -220,25 +227,44 @@ powershell "Pulling Spoon Image: #{sample_image_tag}" do
   only_if  { ::File.exists?( "#{shared_folder}" ) }
 end
 # Store URL-encoded image names in the filenames
-spoon_box_images.each do |spoon_box_image|
-spoon_image_tag = spoon_box_image.gsub('%3A',':').gsub('%2F','/')
-  powershell "Importing Spoon Image: #{spoon_image_tag}" do
-    code <<-EOH
-    & spoon.exe login #{username} "#{password}"
-    & spoon.exe import --name=#{spoon_image_tag} --overwrite svm #{shared_folder}\\#{spoon_box_image}
-    EOH
-    only_if  { ::File.exists?( "#{shared_folder}\\#{spoon_box_image}" ) }
+# TODO provide a guard 
+# not_if "spoon.exe images --no-truncace | findstr '#{spoon_image_tag}' "
+if import_shared_images
+  spoon_shared_images.each do |spoon_box_image|
+    spoon_image_tag = spoon_box_image.gsub('%3A',':').gsub('%2F','/')
+    powershell "Importing Spoon Image: #{spoon_image_tag}" do
+      code <<-EOH
+      & spoon.exe login #{username} "#{password}"
+      & spoon.exe import --name=#{spoon_image_tag} --overwrite svm #{shared_folder}\\#{spoon_box_image}
+      EOH
+      only_if  { ::File.exists?( "#{shared_folder}\\#{spoon_box_image}" ) }
+    end
   end
 end
 
+if import_browser_images
+  spoon_browser_images.each do |spoon_box_image|
+    spoon_image_tag = spoon_box_image.gsub('%3A',':').gsub('%2F','/')
+    powershell "Importing Spoon Image: #{spoon_image_tag}" do
+      code <<-EOH
+      & spoon.exe login #{username} "#{password}"
+      & spoon.exe import --name=#{spoon_image_tag} --overwrite svm #{shared_folder}\\#{spoon_box_image}
+      EOH
+      only_if  { ::File.exists?( "#{shared_folder}\\#{spoon_box_image}" ) }
+    end
+  end
+end
 # https://technet.microsoft.com/en-us/library/cc725744.aspx
 
 # NOTE: batch resource requires Chef 11.6.0 or later
 # The box image used has chef-windows-10.34.6-1.windows
 # --detach  does not seem to work
+# https://technet.microsoft.com/en-us/library/dd347721.aspx
+# https://github.com/chef/chef/issues/2348
+# Start-Transcript [[-Path] <string>] [-Append] [-Force] [-NoClobber] [-Confirm] [-WhatIf] [<CommonParameters>]
 powershell 'Launch selenium-grid' do
   run_command = "'C:\\Program Files\\Spoon\\Cmd\\spoon.exe' run base,selenium-grid"
-  taskname = 'Launch selenium-grid'
+  taskname = 'Launch_selenium_grid'
 
   code <<-EOH
 
@@ -247,11 +273,27 @@ $schedule = 'ONCE'
 $time = '00:00' 
 # $run_command = "'C:\\Program Files\\Spoon\\Cmd\\spoon.exe' run base,selenium-grid"
 $run_command = "#{run_command}"
-$taskname = 'Launch selenium-grid'
-& SchTasks.exe /Delete /TN $taskname
-# write-host `& SchTasks.exe /Create /TN $taskname /RL $level /TR $run_command /IT /SC $schedule  /ST $time
-& SchTasks.exe /Create  /TN $taskname /RL $level /TR $run_command /IT /SC $schedule /ST $time
+$taskname = '#{taskname}'
+& SchTasks.exe /Delete /TN $taskname /F
+# Note: /IT
+& SchTasks.exe /Create  /TN $taskname /RL $level /TR $run_command /SC $schedule /ST $time
 & SchTasks.exe /Run /TN $taskname
+
+write-output "Waiting for status of the task '${taskname}'"
+
+start-sleep -second 1
+
+while($true){
+  $status = schtasks /query /TN $taskname| select-string -pattern "${taskname}"
+  write-output $status
+  if ($status.tostring() -match '(Running|Ready)'){
+    write-host "${taskname} is running..."
+    break 
+  } else { 
+    write-host "${taskname} is not yet running..."
+  }
+  start-sleep -milliseconds 1000
+}
 
   EOH
   action  :run
@@ -259,21 +301,33 @@ end
 
 powershell  'Launch selenium-grid-node' do
   run_command = "'C:\\Program Files\\Spoon\\Cmd\\spoon.exe' run base,spoonbrew/ie-selenium:9,selenium-grid-node node ie 9"
-  taskname = 'Launch selenium-grid-node'
+  taskname = 'Launch_selenium_grid_node'
   code <<-EOH
 
 $level = 'HIGHEST'
 $schedule = 'ONCE'
 $time = '00:00' # required, irrrevant
 
-# $run_command = "'C:\\Program Files\\Spoon\\Cmd\\spoon.exe' run base,spoonbrew/ie-selenium:9,selenium-grid-node node ie 9"
 $run_command = "#{run_command}"
-$taskname = 'Launch selenium-grid-node'
+$taskname = '#{taskname}'
 
-& SchTasks.exe /Delete /TN $taskname
-# write-host `& SchTasks.exe /Create /TN $taskname /RL $level /TR $run_command /IT /SC $schedule  /ST $time
-& SchTasks.exe /Create  /TN $taskname /RL $level /TR $run_command /IT /SC $schedule /ST $time
+& SchTasks.exe /Delete /TN $taskname /F
+& SchTasks.exe /Create  /TN $taskname /RL $level /TR $run_command /SC $schedule /ST $time
 & SchTasks.exe /Run /TN $taskname
+
+while($true){
+  $status = schtasks /query /TN $taskname| select-string -pattern "${taskname}"
+  write-output $status
+  if ($status.tostring() -match '(Running|Ready)'){
+    write-host "${taskname} is running..."
+    break 
+  } else { 
+    write-host "${taskname} is not yet running..."
+  }
+  start-sleep -milliseconds 1000
+}
+
+
   EOH
   action  :run
 end
