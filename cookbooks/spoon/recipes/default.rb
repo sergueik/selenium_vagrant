@@ -79,7 +79,7 @@ function assert {
 }
 
 
-Write-Host "Probing credentials"
+Write-Host 'Probing credentials'
 
   [system.Net.WebRequest]$request = [system.Net.WebRequest]::Create($source_url)
   try {
@@ -105,7 +105,7 @@ Write-Host "Probing credentials"
 
     $proxy = New-Object System.Net.WebProxy
     $proxy.Address = $proxy_address
-    Write-Host ("Probing {0}" -f $proxy.Address)
+    Write-Host ('Probing {0}' -f $proxy.Address)
     $proxy.useDefaultCredentials = $true
 
 
@@ -150,7 +150,7 @@ NOTE: cannot use https:
   not_if { ::File.exists?(dest_file_path) }
 end
 
-log 'Complete Download' do
+log 'Complete spoon-plugin Download' do
   level :info
 end
 
@@ -170,7 +170,7 @@ powershell "Install Spoon Plugin #{dest_file}" do
   
 code <<-EOH
 
-$name = 'install spoon plugin'
+$name = 'Install spoon plugin'
 & schtasks /Delete /F /TN $name
 write-output "Starting task '${name}'"
 
@@ -206,7 +206,7 @@ while($true){
 
   EOH
   only_if { ::File.exists?( "#{temp_path}/#{job_xml}" ) }
-  # detect that spoon is installed
+  # skip if spoon is installed
   not_if { ::Registry.value_exists?('HKCU\Software\Code Systems\Spoon','Id')}
 end
 
@@ -219,7 +219,7 @@ powershell "Pulling Spoon Image: #{sample_image_tag}" do
   EOH
   only_if  { ::File.exists?( "#{shared_folder}" ) }
 end
-
+# Store URL-encoded image names in the filenames
 spoon_box_images.each do |spoon_box_image|
 spoon_image_tag = spoon_box_image.gsub('%3A',':').gsub('%2F','/')
   powershell "Importing Spoon Image: #{spoon_image_tag}" do
@@ -230,21 +230,55 @@ spoon_image_tag = spoon_box_image.gsub('%3A',':').gsub('%2F','/')
     only_if  { ::File.exists?( "#{shared_folder}\\#{spoon_box_image}" ) }
   end
 end
-# TODO: execute through schtasks ?
-powershell 'Launching Spoon Grid' do
+
+# https://technet.microsoft.com/en-us/library/cc725744.aspx
+
+# NOTE: batch resource requires Chef 11.6.0 or later
+# The box image used has chef-windows-10.34.6-1.windows
+# --detach  does not seem to work
+powershell 'Launch selenium-grid' do
+  run_command = "'C:\\Program Files\\Spoon\\Cmd\\spoon.exe' run base,selenium-grid"
+  taskname = 'Launch selenium-grid'
+
   code <<-EOH
-  & spoon.exe login #{username} "#{password}"
-  & spoon.exe run --detach base,selenium-grid
+
+$level = 'HIGHEST'
+$schedule = 'ONCE'
+$time = '00:00' 
+# $run_command = "'C:\\Program Files\\Spoon\\Cmd\\spoon.exe' run base,selenium-grid"
+$run_command = "#{run_command}"
+$taskname = 'Launch selenium-grid'
+& SchTasks.exe /Delete /TN $taskname
+# write-host `& SchTasks.exe /Create /TN $taskname /RL $level /TR $run_command /IT /SC $schedule  /ST $time
+& SchTasks.exe /Create  /TN $taskname /RL $level /TR $run_command /IT /SC $schedule /ST $time
+& SchTasks.exe /Run /TN $taskname
+
   EOH
-end
-powershell 'Launching Spoon Node' do
-  code <<-EOH
-  & spoon.exe login #{username} "#{password}"
-  & spoon.exe run --detach base,spoonbrew/ie-selenium:9,selenium-grid-node node ie 9 
-  EOH
+  action  :run
 end
 
-log 'Done.' do
+powershell  'Launch selenium-grid-node' do
+  run_command = "'C:\\Program Files\\Spoon\\Cmd\\spoon.exe' run base,spoonbrew/ie-selenium:9,selenium-grid-node node ie 9"
+  taskname = 'Launch selenium-grid-node'
+  code <<-EOH
+
+$level = 'HIGHEST'
+$schedule = 'ONCE'
+$time = '00:00' # required, irrrevant
+
+# $run_command = "'C:\\Program Files\\Spoon\\Cmd\\spoon.exe' run base,spoonbrew/ie-selenium:9,selenium-grid-node node ie 9"
+$run_command = "#{run_command}"
+$taskname = 'Launch selenium-grid-node'
+
+& SchTasks.exe /Delete /TN $taskname
+# write-host `& SchTasks.exe /Create /TN $taskname /RL $level /TR $run_command /IT /SC $schedule  /ST $time
+& SchTasks.exe /Create  /TN $taskname /RL $level /TR $run_command /IT /SC $schedule /ST $time
+& SchTasks.exe /Run /TN $taskname
+  EOH
+  action  :run
+end
+
+log 'Completed install and launch Spoon Selenium Grid.' do
   level :info
 end
 
