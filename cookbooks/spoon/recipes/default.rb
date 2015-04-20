@@ -24,7 +24,7 @@ spoon_shared_images = %w|
     selenium-grid-plugin%3A201502271240
 |
 
-spoon_box_browser_images = %w|
+spoon_browser_images = %w|
     spoonbrew%2Fie-selenium%3A9
     spoonbrew%2Fie-selenium%3A10
     spoonbrew%2Fie-selenium%3A11
@@ -261,42 +261,71 @@ end
 # --detach  does not seem to work
 # https://technet.microsoft.com/en-us/library/dd347721.aspx
 # https://github.com/chef/chef/issues/2348
-# Start-Transcript [[-Path] <string>] [-Append] [-Force] [-NoClobber] [-Confirm] [-WhatIf] [<CommonParameters>]
 powershell 'Launch selenium-grid' do
   run_command = "'C:\\Program Files\\Spoon\\Cmd\\spoon.exe' run base,selenium-grid"
   taskname = 'Launch_selenium_grid'
-
+  log_filename = "c:/temp/#{taskname}.log"
   code <<-EOH
-
+$custom_log = "c:/temp/#{taskname}-custom.log"
+Start-Transcript -Path #{log_filename} 
 $level = 'HIGHEST'
 $schedule = 'ONCE'
 $time = '00:00' 
-# $run_command = "'C:\\Program Files\\Spoon\\Cmd\\spoon.exe' run base,selenium-grid"
+<#
+C:\Users\vagrant>spoon.exe run base,selenium-grid
+Upgrading Spoon VM to version 11.7.11
+Error: Pulling image failed
+#>
 $run_command = "#{run_command}"
 $taskname = '#{taskname}'
+
+write-output "`& SchTasks.exe /Delete /TN ${taskname} /F" | Tee-Object -FilePath  $custom_log 
 & SchTasks.exe /Delete /TN $taskname /F
-# Note: /IT
+
+
+write-output "`& SchTasks.exe /Create  /TN ${taskname} /RL ${level} /TR ${run_command} /SC ${schedule} /ST ${time}" | Tee-Object -FilePath  $custom_log 
 & SchTasks.exe /Create  /TN $taskname /RL $level /TR $run_command /SC $schedule /ST $time
+write-output "`& SchTasks.exe /Run /TN ${taskname}" | Tee-Object -FilePath  $custom_log 
 & SchTasks.exe /Run /TN $taskname
 
-write-output "Waiting for status of the task '${taskname}'"
+write-output "Waiting for status of the task '${taskname}'" | Tee-Object -FilePath  $custom_log 
 
 start-sleep -second 1
 
 while($true){
   $status = schtasks /query /TN $taskname| select-string -pattern "${taskname}"
-  write-output $status
+  write-output "schtasks /query /TN $taskname| select-string -pattern `"${taskname}`""  | Tee-Object -FilePath  $custom_log 
+  write-output $status | Tee-Object -FilePath  $custom_log 
+
   if ($status.tostring() -match '(Running|Ready)'){
-    write-host "${taskname} is running..."
+
+    write-output "${taskname} is running..."| Tee-Object -FilePath  $custom_log 
     break 
   } else { 
-    write-host "${taskname} is not yet running..."
+    write-host "${taskname} is not yet running..."| Tee-Object -FilePath  $custom_log 
   }
   start-sleep -milliseconds 1000
 }
-
+Stop-Transcript
   EOH
   action  :run
+end
+
+ruby_block "Check Log" do
+  taskname = 'Launch_selenium_grid'
+  log_filename = "c:/temp/#{taskname}.log"
+  block do
+    version = ""
+
+    if File.exists?(log_filename)
+      # Read the log file.
+      f = File.open(log_filename)
+      f.each do  |line|
+        Chef::Log.info(line)
+        end
+      f.close
+    end
+  end
 end
 
 powershell  'Launch selenium-grid-node' do
