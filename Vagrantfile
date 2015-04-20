@@ -42,6 +42,9 @@ case box_name
    when /trusty32/ 
      config.vm.box_url = "file://#{basedir}/Downloads/trusty-server-cloudimg-i386-vagrant-disk1.box"
      config.vm.box = 'ubuntu/trusty32'
+   when /trusty64/ 
+     config.vm.box_url = "file://#{basedir}/Downloads/trusty-server-cloudimg-amd64-vagrant-disk1.box"
+     config.vm.box = 'ubuntu/trusty64'
    when /precise64/ 
      config.vm.box_url = "file://#{basedir}/Downloads/precise-server-cloudimg-amd64-vagrant-disk1.box"
      config.vm.box = 'ubuntu/precise64'
