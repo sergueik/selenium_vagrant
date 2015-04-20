@@ -20,10 +20,46 @@ logfile = 'node.log'
 logger = 'INFO'
 node_host = '127.0.0.1'
 firefox_install_archive = "firefox-#{node['selenium']['firefox']['version']}.tar.bz2" 
+chrome_driver_install_archive = "chromedriver_linux-#{node['selenium']['chrome_driver']['version']}-#{node['selenium']['chrome_driver']['arch']}.zip"
+# Install ChromeDriver
+remote_file "#{account_home}/selenium/#{chrome_driver_install_archive}" do
+  source node['selenium']['chrome_driver']['url']
+  action :create_if_missing
+  ignore_failure true
+  owner account_username
+end
+package 'Install unzip' do
+  package_name 'unzip'
+  action :install
+  ignore_failure false
+end
+
+# http://askubuntu.com/questions/510056/how-to-install-google-chrome-on-ubuntu-14-04
+bash 'set prerequisites for install chrome as package' do
+    code <<-EOH
+
+# Add Key:
+/usr/bin/wget -q -O - https://dl-ssl.google.com/linux/linux_signing_key.pub | apt-key add - 
+# Set repository:
+echo "deb http://dl.google.com/linux/chrome/deb/ stable main" >> /etc/apt/sources.list.d/google.list
+# Update apt-get db
+apt-get update 
+
+    EOH
+    not_if { ::File.exists?('/etc/apt/sources.list.d/google.list') }
+  end
+
+# Install Chrome
+package 'Install Chrome browser' do
+  package_name 'google-chrome-stable'
+  action :install
+  ignore_failure false
+  # NOTE: will be installed in /opt/google/chrome by default 
+end
 
 # Install Firefox
 if use_default_version
-  package 'Install Firefox' do
+  package 'Install Firefox  browser' do
     package_name 'firefox'
     action :install
     ignore_failure false
@@ -69,6 +105,20 @@ else
 end
 
 # TODO - generate Firefox Profile directories
+# Create log4j properties
+template "#{selenium_home}/#{log4j_properties_file}" do
+  source 'log4j_properties.erb'
+  variables(
+     :logger => logger,
+     :logfile => logfile
+  )
+  owner account_username
+  group account_username
+  action :create_if_missing
+  mode 00644
+end
+
+
 # currently only works with precise and not with trusty
 %w{selenium_node}.each do |init_script| 
 
@@ -113,6 +163,10 @@ end
 
 # TODO: apply proxy issue workaround
 
+# TODO  encode firefox_binary path in the launcher scripts 
+# TODO  encode chrome_driver_binary path in the launcher scripts 
+# -Dwebdriver.chrome.driver="..."
+
 # Create standalone launcher script for debugging Selenium Node issues
 template ("#{selenium_home}/#{standalone_script}") do 
   source 'standalone.erb'
@@ -141,6 +195,7 @@ remote_file "#{selenium_home}/#{jar_filename}" do
 end
 
 # Create Selenium Node configuration file
+
 template "#{selenium_home}/node.json" do
   source 'node.json.erb'
   variables(
@@ -165,19 +220,6 @@ end
     supports :status => true, :restart => true
     subscribes :reload, "/etc/init.d/#{service_name}", :immediately
   end
-end
-
-# Create log4j properties
-template "#{selenium_home}/#{log4j_properties_file}" do
-  source 'log4j_properties.erb'
-  variables(
-     :logger => logger,
-     :logfile => logfile
-  )
-  owner account_username
-  group account_username
-  action :create_if_missing
-  mode 00644
 end
 
 log 'Finished configuring Selenium Node.' do
