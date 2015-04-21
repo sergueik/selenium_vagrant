@@ -33,6 +33,15 @@ package 'Install unzip' do
   action :install
   ignore_failure false
 end
+bash 'set prerequisites for install chrome as package' do
+    code <<-EOH
+mkdir "#{account_home}/selenium/chromedriver"
+pushd "#{account_home}/selenium/chromedriver"
+unzip "#{account_home}/selenium/#{chrome_driver_install_archive}"
+chmod +x *
+    EOH
+    not_if { ::File.exists?("#{account_home}/selenium/chromedriver/chromedriver") }
+end
 
 # http://askubuntu.com/questions/510056/how-to-install-google-chrome-on-ubuntu-14-04
 bash 'set prerequisites for install chrome as package' do
