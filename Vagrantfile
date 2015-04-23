@@ -43,9 +43,9 @@ case box_name
      config.vm.box_url = "file://#{basedir}/Downloads/trusty-server-cloudimg-i386-vagrant-disk1.box"
      config.vm.box = 'ubuntu/trusty32'
    when /trusty64/ 
-     config.vm.box_url = "file://#{basedir}/Downloads/trusty-server-cloudimg-amd64-vagrant-disk1.box"
-     config.vm.box = 'ubuntu/trusty64'
-   when /precise64/ 
+     config.vm.box_url = "file://#{basedir}/Downloads/trusty-server-cloudimg-
+     config.vm.box = 'ubuntu/trusty64'   
+when /precise64/ 
      config.vm.box_url = "file://#{basedir}/Downloads/precise-server-cloudimg-amd64-vagrant-disk1.box"
      config.vm.box = 'ubuntu/precise64'
   else 
@@ -79,7 +79,7 @@ case box_name
   config.vm.network 'forwarded_port', guest: 4444, host: 4444, id: 'selenium', auto_correct:true
   
   config.vm.provider 'virtualbox' do |vb|
-    vb.gui = box_gui
+    vb.gui = (box_gui =~ (/^(true|t|yes|y|1)$/i))
     vb.customize ['modifyvm', :id, '--cpus', box_cpus ]
     vb.customize ['modifyvm', :id, '--memory', box_memory ]
     vb.customize ['modifyvm', :id, '--clipboard', 'bidirectional']
