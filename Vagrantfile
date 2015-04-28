@@ -36,16 +36,16 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
 
 # Locate the box
 case box_name 
-   when /centos65/ 
+   when /centos/ 
      config.vm.box_url = "file://#{basedir}/Downloads/centos-6.5-x86_64.box"
      config.vm.box = 'centos65'
    when /trusty32/ 
      config.vm.box_url = "file://#{basedir}/Downloads/trusty-server-cloudimg-i386-vagrant-disk1.box"
      config.vm.box = 'ubuntu/trusty32'
    when /trusty64/ 
-     config.vm.box_url = "file://#{basedir}/Downloads/trusty-server-cloudimg-
+     config.vm.box_url = "file://#{basedir}/Downloads/trusty-server-cloudimg-amd64-vagrant-disk1.box"
      config.vm.box = 'ubuntu/trusty64'   
-when /precise64/ 
+     when /precise64/ 
      config.vm.box_url = "file://#{basedir}/Downloads/precise-server-cloudimg-amd64-vagrant-disk1.box"
      config.vm.box = 'ubuntu/precise64'
   else 
@@ -58,6 +58,9 @@ when /precise64/
   end
   # Configure guest-specific port forwarding
   if config.vm.box =~ /ubuntu|redhat|debian|centos/ 
+    if config.vm.box =~ /centos/ 
+      config.vm.network 'forwarded_port', guest: 8080, host: 8080, id: 'artifactory', auto_correct:true
+    end
     config.vm.network 'forwarded_port', guest: 5901, host: 5901, id: 'vnc', auto_correct: true
     config.vm.host_name = 'vagrant-chef'
     config.vm.synced_folder './' , '/vagrant', disabled: true
@@ -108,35 +111,10 @@ when /precise64/
   # Use shell provisioner with centos
   when /centos/ 
 
-    # Turn off firewall
-    config.vm.provision 'shell', inline: 'chkconfig iptables off'
+    config.vm.provision 'shell', path: 'centos_common_provision.sh'
 
-    # Provision update yum repositories
-    config.vm.provision 'shell', inline: 'sudo yum -y update'
-
-    # Provision new glibc
-    config.vm.provision 'shell', inline: 'sudo yum -y install glibc.i686'
-    
-    # Provision misc tools
-    config.vm.provision 'shell', inline: 'sudo yum install -y vim man-1.6f-32.el6 git-1.7.1-3.el6_4.1 wget-1.12-1.8.el6'
-    
-    # Provision Grab "Development Tools" for needed for compiling software from sources
-    config.vm.provision 'shell', inline: 'sudo yum -y groupinstall "Development Tools"'
- 
-    # Provision GNU screen
-    config.vm.provision 'shell', inline: 'sudo yum -y install screen-4.0.3-16.el6'
- 
-    # Adding the EPEL
-    config.vm.provision 'shell', inline: 'sudo yum -y install epel-release-6-8.noarch'
-
-    # Provision Latest Docker
-    config.vm.provision 'shell', inline: 'sudo yum -y install docker-io'
-
-    # Add Artifactory Docker Registry
-    config.vm.provision 'file', source: '.dockercfg', destination: '~/.dockercfg'
-
-    # Remove and install jdk from locally hosted artifactory repository - unfinished
-     config.vm.provision 'shell', inline: <<END_SCRIPT1
+    # Remove and install jdk from locally hosted artifactory repository 
+    config.vm.provision 'shell', inline: <<END_SCRIPT1
  
 export YUM_FLAG=-y
 
@@ -156,6 +134,18 @@ fi
 fi
 
 END_SCRIPT1
+
+    # Provision Latest Docker
+    config.vm.provision 'shell', inline: 'sudo yum -y install docker-io'
+
+    # Add Artifactory Docker Registry
+    config.vm.provision 'file', source: '.dockercfg', destination: '~/.dockercfg'
+    # Setup local artifactory repo - unfinished 
+    config.vm.provision :chef_solo do |chef|
+      chef.data_bags_path = 'data_bags'
+      chef.add_recipe 'wrapper_yum'
+    end
+
   # For Windows use Chef and Powershell provisioner - unfinished
   else 
     
