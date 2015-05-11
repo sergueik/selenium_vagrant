@@ -31,6 +31,7 @@ cookbooks/databag_manager
 cookbooks/firebug
 cookbooks/firefox
 cookbooks/hostsfile
+cookbooks/perl
 cookbooks/docker
 cookbooks/docker_registry
 cookbooks/apt
