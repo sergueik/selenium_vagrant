@@ -80,6 +80,7 @@ case box_name
   end
   # Configure common port forwarding
   config.vm.network 'forwarded_port', guest: 4444, host: 4444, id: 'selenium', auto_correct:true
+  config.vm.network 'forwarded_port', guest: 3000, host: 3000, id: 'reactor', auto_correct:true
   
   config.vm.provider 'virtualbox' do |vb|
     vb.gui = (box_gui =~ (/^(true|t|yes|y|1)$/i))
