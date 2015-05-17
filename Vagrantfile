@@ -107,6 +107,8 @@ case box_name
       chef.add_recipe 'selenium_hub'
       chef.add_recipe 'selenium_node'
       chef.add_recipe 'firebug'
+      chef.add_recipe 'perl'
+      chef.add_recipe 'custom_cpan_modules'
       chef.log_level = 'info' 
     end
   # Use shell provisioner with centos

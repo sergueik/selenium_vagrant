@@ -4,8 +4,27 @@ libxml2-dev
 libxslt1-dev
 libexpat1-dev
 /
-
+# TODO : clean modules cpanm would be able to figure out on its own
 default['custom_cpan_modules']['modules'] = %w/
+Carp::Assert
+Archive::Zip
+Test::Deep
+Test::Fatal
+Test::NoWarnings
+Test::Warn
+Time::Mock
+Try::Tiny
+Socket
+IO::Socket
+namespace::clean
+Sub::Install
+Test::LongString
+Test::LWP::UserAgent
+List::MoreUtils
+File::Which
+Moo
+Moo::Role
+Selenium::Remote::Driver
 CGI 
 Time::HiRes 
 Date::Parse 
