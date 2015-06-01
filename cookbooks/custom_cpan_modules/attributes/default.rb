@@ -1,4 +1,5 @@
 default['custom_cpan_modules']['packages'] = %w/
+build-essential
 libssl-dev
 libxml2-dev
 libxslt1-dev
