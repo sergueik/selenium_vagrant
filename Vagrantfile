@@ -4,14 +4,15 @@
 # Custom environment settings to enable this Vagrantfile to boot various flavours of Linux or Windows from Linux or Windows host
 vagrant_use_proxy = ENV.fetch('VAGRANT_USE_PROXY', nil)
 http_proxy = ENV.fetch('HTTP_PROXY', nil) 
-box_name = ENV.fetch('BOX_NAME', 'ubuntu/precise64') 
+# Found that on some hosts ENV.fetch does not work 
+box_name = ENV.fetch('BOX_NAME', 'windows7') 
 basedir =  ENV.fetch('USERPROFILE', '')  
 basedir  = ENV.fetch('HOME', '') if basedir == ''
 basedir = basedir.gsub('\\', '/')
 
 box_memory = ENV.fetch('BOX_MEMORY', '1024') 
 box_cpus = ENV.fetch('BOX_CPUS', '1') 
-box_gui = ENV.fetch('BOX_GUI', 'false') 
+box_gui = ENV.fetch('BOX_GUI', 'true') 
 
 VAGRANTFILE_API_VERSION = '2'
  
@@ -65,6 +66,13 @@ case box_name
     config.vm.host_name = 'vagrant-chef'
     config.vm.synced_folder './' , '/vagrant', disabled: true
   else
+    # have to clear HTTP_PROXY to prevent
+    # WinRM::WinRMHTTPTransportError: Bad HTTP response returned from server (503) 
+    # https://github.com/chef/knife-windows/issues/143
+    ENV.delete('HTTP_PROXY')
+    # Note Windows Product Activation dialog  appears to block chef solo from doing anything and result in Vagrant failing with 
+    # Chef never successfully completed!
+
     config.vm.communicator = 'winrm'
     config.winrm.username = 'vagrant'
     config.winrm.password = 'vagrant'
@@ -154,10 +162,14 @@ END_SCRIPT1
     
     config.vm.provision :chef_solo do |chef|
       chef.data_bags_path = 'data_bags'
-      chef.add_recipe 'spoon'
+      chef.add_recipe 'windows' 
+      chef.add_recipe 'powershell' 
+      # NOTE: 'powershell'is included by other recipes but also is  added to '.gitignore' 
+      chef.add_recipe 'custom_powershell'
       chef.log_level = 'info' 
     end
   end
 end
 
 # VAGRANT_LOG=debug vagrant up > debug.log 2>&1
+# 
