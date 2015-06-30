@@ -166,6 +166,7 @@ END_SCRIPT1
       chef.add_recipe 'powershell' 
       # NOTE: 'powershell'is included by other recipes but also is  added to '.gitignore' 
       chef.add_recipe 'custom_powershell'
+      chef.add_recipe 'abcpdf'
       chef.log_level = 'info' 
     end
   end

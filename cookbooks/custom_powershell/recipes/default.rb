@@ -1,6 +1,25 @@
 log 'Started execution various custom powershell scripts.' do
   level :info
 end
+
+package = '' 
+
+# install Nunit
+
+powershell 'Install Nunit' do
+  code <<-EOH
+  $package = "#{package}"
+  if (-not $package) {
+   $package  = 'NUnit-2.6.3.msi'
+   $package_folder  = 'c:\\vagrant';
+}
+  & msiexec.exe /i "${package_folder}\\${package}"  /quiet
+  EOH
+  # only if nunit is not installed
+  # only_if  { ::Registry.value_exists?('HKCU\Software\Code Systems\Spoon','Id')}
+end
+
+
 system = node['kernel']['machine'] == 'x86_64' ? 'win64' : 'win32'
 filename = node['custom_powershell']['filename']
 
@@ -174,6 +193,67 @@ Chef::Log.info("Test if log file exists: \"#{file_fillpath}\"")
 end
 
 
+
+powershell  'Change Event Logs  Access' do
+  code <<-EOH
+
+
+
+function change_Registry_acl{
+
+
+<#
+	This script grants
+	NT AUTHORITY\\NETWORK SERVICE 
+	full permission to create custom named Event Logs 
+	Usage:
+
+		. ".\change_registry_acl.ps1"
+#>
+
+pushd HKLM:
+
+$account = 'NT AUTHORITY\\NETWORK SERVICE'
+write-output "Give ${account} full permission to Eventlogs key"
+
+$paths = @(
+	'/SYSTEM/Currentcontrolset/Services/EventLog', 
+	'/SYSTEM/CurrentControlSet/Services/EventLog/Security/Security'
+)
+
+foreach ($path in $paths ) {
+
+	get-childitem	-path $path| out-null;
+	$acl = Get-Acl -path $path;
+	if ($acl.GetType().Name -ne 'RegistrySecurity' ) {
+		Throw 'Error accessing Registry'
+	}
+
+	$current_rules = $acl.GetAccessRules($true, $true, [System.Security.Principal.NTAccount])
+	$current_level = $current_rules | where-object {$_.IdentityReference -like $account } | 
+	select-object -ExpandProperty RegistryRights
+
+
+	if (($current_level -ne $null	) -and ($current_level -like '*Full*')) {
+		write-output ('Account {0} already has rights to {1}' -f $account, $path)
+	} else {
+		write-output ('Granting account {0} rights to {1}' -f $account, $path)
+		$acl.SetAccessRuleProtection($True, $False)
+		$rule = New-Object System.Security.AccessControl.RegistryAccessRule($account,'FullControl','Allow')
+		$acl.SetAccessRule($rule)
+	}
+
+}
+popd
+
+}
+
+
+change_Registry_acl
+
+  EOH
+  action  :run
+end
 log 'Completed execution various custom powershell scripts.' do
   level :info
 end
