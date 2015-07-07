@@ -23,7 +23,8 @@ There is work in progress on adding chrome recipes to ubuntu, testing on centos,
 ## Note 
 There is a big number of dependency cookbooks. These are currently placed in the cookbooks directory - it is important that some (notably powershell and windows) cookbooks are snapshots of certain past version which is known to be the last stable. Warning - these are not maintained locally, but are likely to added to .gitignore. Occasuinally this may lead to a error in provisioning e.g. conflict between build-essential docker dependency that is processed on a windows guest as it were a mac.
 
-{|
+|cookbook|dependency of 
+| -------|:-------------:|
 |apt
 |aufs
 |base
@@ -34,7 +35,6 @@ There is a big number of dependency cookbooks. These are currently placed in the
 |custom_cpan_modules
 |databag_manager
 |device-mapper
-|-
 |dmg
 |docker
 |docker_registry
@@ -45,7 +45,6 @@ There is a big number of dependency cookbooks. These are currently placed in the
 |gitignote.txt
 |golang
 |homebrew
-|-
 |hostsfile
 |iptables
 |iptables-ng
@@ -56,7 +55,6 @@ There is a big number of dependency cookbooks. These are currently placed in the
 |ms_dotnet2
 |ms_dotnet4
 |ms_dotnet45
-|-
 |ohai
 |polipo
 |powershell
@@ -67,7 +65,6 @@ There is a big number of dependency cookbooks. These are currently placed in the
 |selenium_hub
 |selenium_node
 |spoon
-|-
 |sysctl
 |tweak_proxy_settings
 |vnc
@@ -78,5 +75,4 @@ There is a big number of dependency cookbooks. These are currently placed in the
 |xvfb
 |yum
 |yum-epel
-|}
 
