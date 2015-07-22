@@ -16,6 +16,8 @@ Based on the `BOX_NAME` environment the following guest is created
  - windows7
       base box with spoon, few spoon images  for selenium-grid and ie,9,10,11
 
+The `BOX_GUI` is recognized to allow gui(less)mode  - important for spoon.Net testing (not very stable)
+The `VAGRANT_USE_PROXY` together with `HTTP_PROXY` is standard environment to deal with firewall. 
 
 ## Open Items 
 There is work in progress on adding chrome recipes to ubuntu, testing on centos, better error detection on windows7, especially  with spoon.Net layer
