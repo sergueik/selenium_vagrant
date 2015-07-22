@@ -5,7 +5,7 @@
 vagrant_use_proxy = ENV.fetch('VAGRANT_USE_PROXY', nil)
 http_proxy = ENV.fetch('HTTP_PROXY', nil) 
 # Found that on some hosts ENV.fetch does not work 
-box_name = ENV.fetch('BOX_NAME', 'windows7') 
+box_name = ENV.fetch('BOX_NAME', 'trusty32') 
 basedir =  ENV.fetch('USERPROFILE', '')  
 basedir  = ENV.fetch('HOME', '') if basedir == ''
 basedir = basedir.gsub('\\', '/')
@@ -105,7 +105,10 @@ case box_name
    # Use chef provisioner with ubuntu
    when /ubuntu|debian/ 
     config.vm.provision :chef_solo do |chef|
+      # http://stackoverflow.com/questions/31149600/undefined-method-cheffish-for-nilnilclass-when-provisioning-chef-with-vagra
+      chef.version = "12.3.0"
       chef.data_bags_path = 'data_bags'
+      chef.add_recipe 'wrapper_google-chrome'
       chef.add_recipe 'wrapper_java'
       chef.add_recipe 'wrapper_hostsfile'
       chef.add_recipe 'tweak_proxy_settings'
