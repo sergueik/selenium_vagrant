@@ -43,29 +43,6 @@ chmod +x *
     not_if { ::File.exists?("#{account_home}/selenium/chromedriver/chromedriver") }
 end
 
-# http://askubuntu.com/questions/510056/how-to-install-google-chrome-on-ubuntu-14-04
-bash 'set prerequisites for install chrome as package' do
-    code <<-EOH
-
-# Add Key:
-/usr/bin/wget -q -O - https://dl-ssl.google.com/linux/linux_signing_key.pub | apt-key add - 
-# Set repository:
-echo "deb http://dl.google.com/linux/chrome/deb/ stable main" >> /etc/apt/sources.list.d/google.list
-# Update apt-get db
-apt-get update 
-
-    EOH
-    not_if { ::File.exists?('/etc/apt/sources.list.d/google.list') }
-  end
-
-# Install Chrome
-package 'Install Chrome browser' do
-  package_name 'google-chrome-stable'
-  action :install
-  ignore_failure false
-  # NOTE: will be installed in /opt/google/chrome by default 
-end
-
 # Install Firefox
 if use_default_version
   package 'Install Firefox  browser' do
