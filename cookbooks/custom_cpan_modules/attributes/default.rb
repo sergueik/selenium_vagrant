@@ -42,6 +42,7 @@ Carp
 File::Temp 
 Encode
 
+LWP::Simple
 LWP::UserAgent 
 Net::SSLeay
 IO::Socket::SSL
