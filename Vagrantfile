@@ -100,6 +100,10 @@ case box_name
     vb.customize ['modifyvm', :id, '--usb', 'off']
   end
 
+
+  # config.berkshelf.berksfile_path = 'cookbooks/wrapper_java/Berksfile'
+  # config.berkshelf.enabled = true
+
   # Provision software
   case config.vm.box.to_s 
    # Use chef provisioner with ubuntu
@@ -109,12 +113,13 @@ case box_name
       chef.version = '12.3.0'
       chef.data_bags_path = 'data_bags'
       chef.add_recipe 'wrapper_google-chrome'
+      chef.add_recipe 'java'
       chef.add_recipe 'wrapper_java'
       chef.add_recipe 'wrapper_hostsfile'
       chef.add_recipe 'tweak_proxy_settings'
       # TODO - choose which X server to install
       chef.add_recipe 'xvfb'
-      chef.add_recipe 'vnc'
+      chef.add_recipe 'wrapper_vnc'
       chef.add_recipe 'selenium_hub'
       chef.add_recipe 'selenium_node'
       chef.add_recipe 'firebug'
