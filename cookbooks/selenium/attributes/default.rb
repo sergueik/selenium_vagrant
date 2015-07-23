@@ -9,7 +9,7 @@ default['selenium']['firefox']['url'] = \
 "#{default['selenium']['firefox']['releases_url']}/#{default['selenium']['firefox']['version']}/linux-#{default['selenium']['firefox']['arch']}/#{default['selenium']['firefox']['lang']}/firefox-#{default['selenium']['firefox']['version']}.tar.bz2"
 
 
-default['selenium']['chrome_driver']['version'] = '2.15'
+default['selenium']['chrome_driver']['version'] = '2.16'
 default['selenium']['chrome_driver']['releases_url'] = 'http://chromedriver.storage.googleapis.com'
 default['selenium']['chrome_driver']['arch'] = kernel['machine'] =~ /x86_64/ ? '64' : '32'
 default['selenium']['chrome_driver']['url'] = \
