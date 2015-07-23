@@ -106,7 +106,7 @@ case box_name
    when /ubuntu|debian/ 
     config.vm.provision :chef_solo do |chef|
       # http://stackoverflow.com/questions/31149600/undefined-method-cheffish-for-nilnilclass-when-provisioning-chef-with-vagra
-      chef.version = "12.3.0"
+      chef.version = '12.3.0'
       chef.data_bags_path = 'data_bags'
       chef.add_recipe 'wrapper_google-chrome'
       chef.add_recipe 'wrapper_java'
@@ -118,8 +118,10 @@ case box_name
       chef.add_recipe 'selenium_hub'
       chef.add_recipe 'selenium_node'
       chef.add_recipe 'firebug'
-      chef.add_recipe 'perl'
-      chef.add_recipe 'custom_cpan_modules'
+      # NOTE: time-consuming
+      # TODO: refactor Vagrantfile
+      # chef.add_recipe 'perl'
+      # chef.add_recipe 'custom_cpan_modules'
       chef.log_level = 'info' 
     end
   # Use shell provisioner with centos
@@ -167,8 +169,10 @@ END_SCRIPT1
       chef.data_bags_path = 'data_bags'
       chef.add_recipe 'windows' 
       chef.add_recipe 'powershell' 
-      # NOTE: 'powershell'is included by other recipes but also is  added to '.gitignore' 
+      # NOTE: 'powershell' is included by other recipes and added to '.gitignore' 
+      # processing output file during the execution of the recipe
       chef.add_recipe 'custom_powershell'
+      # execute c# code embedded in Powershell which is embedded in a recipe resource
       chef.add_recipe 'abcpdf'
       chef.log_level = 'info' 
     end

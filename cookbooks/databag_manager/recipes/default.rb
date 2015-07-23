@@ -3,10 +3,10 @@ require 'chef-vault'
 environment = node.chef_environment
 vault_databag = "#{environment}-vault"
 application_databag = "#{environment}_tomcat_app_config"
-service_name = 'hal-giftsf-server'
-service_conf_name =  "/etc/hal-chip-server/chip.conf"
+service_name = 'company-media-server'
+service_conf_name =  "/etc/company-chip-server/chip.conf"
 server_conf_template = 'chip.conf.erb'
-application_site =  'hollandamerica'
+application_site =  'sitename'
 
 if data_bag(vault_databag).include? 'seedvalue'
   seed = ChefVault::Item.load(vault_databag, 'seedvalue')
@@ -28,7 +28,7 @@ else
   dbdwh = ChefVault::Item.load(vault_databag, 'dbdwh')
 end
 
-polar = ChefVault::Item.load(vault_databag, 'polar')
+mainframe = ChefVault::Item.load(vault_databag, 'mainframe')
 dataBagItem = data_bag_item(application_databag, service_name)
 application = dataBagItem[environment]['application']
 rpm_version = application['rpm_version']
@@ -104,14 +104,14 @@ template  service_conf_name  do
       :dbdwh_password => dbdwh['dbdwh_password'],
       :dbdwh_url => application['dbdwh']['url'],
       :dbdwh_driverClassName => application['dbdwh']['driverClassName'],
-      :polar_hal_username => polar['hal_username'],
-      :polar_hal_password => polar['hal_password'],
-      :polar_hal_url => application['polar']['hal']['url'],
-      :sbn_hal_username => polar['sbn_username'],
-      :sbn_hal_password => polar['sbn_password'],
-      :sbn_hal_url => application['polar']['sbn']['url'],
-      :polar_load_cabin_metadata => application['polar']['load_cabin_metadata'],
-      :polar_cabin_metadata_location => application['polar']['cabin_metadata_location'],
+      :mainframe_company_username => mainframe['company_username'],
+      :mainframe_company_password => mainframe['company_password'],
+      :mainframe_company_url => application['mainframe']['company']['url'],
+      :sbn_company_username => mainframe['sbn_username'],
+      :sbn_company_password => mainframe['sbn_password'],
+      :sbn_company_url => application['mainframe']['sbn']['url'],
+      :mainframe_load_cabin_metadata => application['mainframe']['load_cabin_metadata'],
+      :mainframe_cabin_metadata_location => application['mainframe']['cabin_metadata_location'],
       :cms_url => application['cms']['url']
   )
   notifies :restart, "service[#{service_name}]"
