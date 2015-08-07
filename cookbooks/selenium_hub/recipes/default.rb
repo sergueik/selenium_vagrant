@@ -11,20 +11,20 @@ selenium_home = "#{account_home}/selenium"
 selenium_version  = node['selenium']['selenium']['version']
 standalone_script = 'run-hub.sh'
 log4j_properties_file = 'hub.log4j.properties'
+log4j_xml= 'log4j.xml'
 logfile = 'hub.log'
 logger = 'INFO'
 jar_filename = 'selenium.jar'
 
 %w{selenium_hub}.each do |init_script| 
 
-  if node[:platform_version].to_i >= 14 
-    # Create selenium node service script configuratrion required for provider.
-    file "/etc/init/#{init_script}.conf"  do
-      owner 'root'
-      group 'root'
-      mode 00755 
-      action :create_if_missing
-    end
+  # Create selenium node service script configuratrion required for provider.
+  file "/etc/init/#{init_script}.conf"  do
+    owner 'root'
+    group 'root'
+    mode 00755 
+    action :create_if_missing
+    only_if node['platform_version'].to_i >= 14
   end
   # Create service init script for Selenium Hub
   template ("/etc/init.d/#{init_script}") do 
@@ -33,7 +33,6 @@ jar_filename = 'selenium.jar'
       :user_name => account_username,
       :selenium_home => selenium_home,
       :log4j_properties_file =>log4j_properties_file ,
-      :hub_ip => node['selenium_node']['hub_ip'], 
       :hub_port => node['selenium_node']['hub_port'],
       :jar_filename  => jar_filename 
     ) 
@@ -56,10 +55,7 @@ end
 template ("#{selenium_home}/#{standalone_script}") do 
   source 'standalone.erb'
   variables(
-    :user_name => account_username,
-    :selenium_home => selenium_home,
     :log4j_properties_file =>log4j_properties_file ,
-    :hub_ip => node['selenium_node']['hub_ip'], 
     :hub_port => node['selenium_node']['hub_port'],
     :jar_filename  => jar_filename 
     ) 
@@ -91,10 +87,10 @@ end
 %w{selenium_hub}.each do |service_name|
   service service_name do
     # NOTE: Init replace with Upstart for 14.04
-    unless node[:platform_version].to_i < 14 
-      provider Chef::Provider::Service::Upstart
-    else
+    if node['platform_version'].to_i < 14 
       provider Chef::Provider::Service::Debian
+    else
+      provider Chef::Provider::Service::Upstart
     end
     action [:enable,:start]
     supports :status => true, :restart => true

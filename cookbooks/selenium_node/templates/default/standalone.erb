@@ -197,7 +197,7 @@ cat <<EEE
 java ${JVM_ARGS} \
 -classpath \
 ${SELENIUM_HOME}/log4j-1.2.17.jar:${SELENIUM_HOME}/${JAR_FILENAME} \
--Dlog4j.configuration=file://${SELENIUM_HOME}/node.log4j.properties \
+-Dlog4j.configuration=file://${SELENIUM_HOME}/<%= @log4j_properties_file %> \
 org.openqa.grid.selenium.GridLauncher \
 -role node \
 -host ${NODE_HOST} \
@@ -214,7 +214,7 @@ EEE
 java ${JVM_ARGS} \
 -classpath \
 ${SELENIUM_HOME}/log4j-1.2.17.jar:${SELENIUM_HOME}/${JAR_FILENAME} \
--Dlog4j.configuration=file://${SELENIUM_HOME}/node.log4j.properties \
+-Dlog4j.configuration=file://${SELENIUM_HOME}/<%= @log4j_properties_file %> \
 org.openqa.grid.selenium.GridLauncher \
 -role node \
 -host ${NODE_HOST} \

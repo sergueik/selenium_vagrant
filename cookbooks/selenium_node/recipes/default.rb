@@ -109,13 +109,12 @@ end
 %w{selenium_node}.each do |init_script| 
 
   # Create Selenium Node service script configuratrion required for provider.
-  if node[:platform_version].to_i >= 14   
-    file "/etc/init/#{init_script}.conf"  do
-      owner 'root'
-      group 'root'
-      mode 00755
-      action :create_if_missing
-    end
+  file "/etc/init/#{init_script}.conf"  do
+    owner 'root'
+    group 'root'
+    mode 00755
+    action :create_if_missing
+    only_if node['platform_version'].to_i >= 14   
   end
 
   # Create service init script for Selenium Node
@@ -157,8 +156,6 @@ end
 template ("#{selenium_home}/#{standalone_script}") do 
   source 'standalone.erb'
   variables(
-    :user_name => account_username,
-    :selenium_home => selenium_home,
     :log4j_properties_file =>log4j_properties_file ,
     :hub_ip => node['selenium_node']['hub_ip'], 
     :hub_port => node['selenium_node']['hub_port'], 
@@ -197,10 +194,10 @@ end
 # Start Selenium Node service
 %w{selenium_node}.each do |service_name|
   service service_name do
-    unless node[:platform_version].to_i < 14 
-      provider Chef::Provider::Service::Upstart
-    else
+    if node['platform_version'].to_i < 14 
       provider Chef::Provider::Service::Debian
+    else
+      provider Chef::Provider::Service::Upstart
     end
     action [:enable,:start]
     supports :status => true, :restart => true
