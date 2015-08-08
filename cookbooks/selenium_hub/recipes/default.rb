@@ -19,12 +19,14 @@ jar_filename = 'selenium.jar'
 %w{selenium_hub}.each do |init_script| 
 
   # Create selenium node service script configuratrion required for provider.
-  file "/etc/init/#{init_script}.conf"  do
-    owner 'root'
-    group 'root'
-    mode 00755 
-    action :create_if_missing
-    only_if node['platform_version'].to_i >= 14
+  if  node[:platform_version].to_i >= 14
+    file "/etc/init/#{init_script}.conf" do
+      owner 'root'
+      group 'root'
+      mode 00755 
+      action :create_if_missing
+     # only_if (node[:platform_version].to_i >= 14)
+    end
   end
   # Create service init script for Selenium Hub
   template ("/etc/init.d/#{init_script}") do 
@@ -87,7 +89,7 @@ end
 %w{selenium_hub}.each do |service_name|
   service service_name do
     # NOTE: Init replace with Upstart for 14.04
-    if node['platform_version'].to_i < 14 
+    if node[:platform_version].to_i < 14 
       provider Chef::Provider::Service::Debian
     else
       provider Chef::Provider::Service::Upstart

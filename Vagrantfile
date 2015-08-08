@@ -5,7 +5,7 @@
 vagrant_use_proxy = ENV.fetch('VAGRANT_USE_PROXY', nil)
 http_proxy = ENV.fetch('HTTP_PROXY', nil) 
 # Found that on some hosts ENV.fetch does not work 
-box_name = ENV.fetch('BOX_NAME', 'trusty32') 
+box_name = ENV.fetch('BOX_NAME', 'trusty64') 
 basedir =  ENV.fetch('USERPROFILE', '')  
 basedir  = ENV.fetch('HOME', '') if basedir == ''
 basedir = basedir.gsub('\\', '/')
@@ -111,13 +111,17 @@ case box_name
     config.vm.provision :chef_solo do |chef|
       # http://stackoverflow.com/questions/31149600/undefined-method-cheffish-for-nilnilclass-when-provisioning-chef-with-vagra
       chef.version = '12.3.0'
+# provided by Berkshelf
+#      chef.add_recipe 'chef-server'
+    
+
       chef.data_bags_path = 'data_bags'
       chef.add_recipe 'wrapper_google-chrome'
       chef.add_recipe 'java'
       chef.add_recipe 'wrapper_java'
       chef.add_recipe 'wrapper_hostsfile'
       chef.add_recipe 'tweak_proxy_settings'
-      # TODO - choose which X server to install
+##      # TODO - choose which X server to install
       chef.add_recipe 'xvfb'
       chef.add_recipe 'wrapper_vnc'
       chef.add_recipe 'selenium_hub'

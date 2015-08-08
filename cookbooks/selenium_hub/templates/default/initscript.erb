@@ -2,8 +2,8 @@
 # set -x
 set -e
 
-SELENIUM_USER="<%= @user_name %>"
-SELENIUM_HOME="<%= @selenium_home %>"
+SELENIUM_USER='<%= @user_name -%>'
+SELENIUM_HOME='<%= @selenium_home -%>'
 SERVICE_NAME='selenium'
 PATH=/sbin:/usr/sbin:/bin:/usr/bin
 DEFAULTS="/etc/default/${SERVICE_NAME}"
@@ -15,7 +15,7 @@ PIDFILE_DIR='/var/run'
 COMMAND="$1"
 export JVM_ARGS="-XX:MaxPermSize=256M -Xmn128M -Xms256M -Xmx256M"
 export HUB_PORT=<%= @hub_port %>
-export JAR_FILENAME='<%= @jar_filename %>'
+export JAR_FILENAME='<%= @jar_filename -%>'
 export SELENIUM_JAR_VERSION=2.44.0 # currently unused
 export ROLE=hub
 
@@ -24,7 +24,7 @@ export ROLE=hub
 export JAVA_HOME='/usr/bin'
 SELENIUM_ARGS=`cat<<END_ARGS
 -classpath ${SELENIUM_HOME}/log4j-1.2.17.jar:${SELENIUM_HOME}/${JAR_FILENAME} \
--Dlog4j.configuration=file://${SELENIUM_HOME}/<%= @log4j_properties_file %> \
+-Dlog4j.configuration=file://${SELENIUM_HOME}/<%= @log4j_properties_file -%> \
 org.openqa.grid.selenium.GridLauncher \
 -role ${ROLE} -port ${HUB_PORT}
 END_ARGS

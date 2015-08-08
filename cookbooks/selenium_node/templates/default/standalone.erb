@@ -9,7 +9,7 @@ export NODE_PORT=<%= @node_port %>
 export HUB_IP_ADDRESS=<%= @hub_ip %>
 # this can be the guest or the host ip
 export HUB_PORT=<%= @hub_port %>
-export JAR_FILENAME='<%= @jar_filename %>'
+export JAR_FILENAME='<%= @jar_filename -%>'
 export SELENIUM_JAR_VERSION=2.44.0 # currently unused
 export DISPLAY_PORT=<%= @display_port %>
 export ROLE=node
@@ -197,7 +197,7 @@ cat <<EEE
 java ${JVM_ARGS} \
 -classpath \
 ${SELENIUM_HOME}/log4j-1.2.17.jar:${SELENIUM_HOME}/${JAR_FILENAME} \
--Dlog4j.configuration=file://${SELENIUM_HOME}/<%= @log4j_properties_file %> \
+-Dlog4j.configuration=file://${SELENIUM_HOME}/<%= @log4j_properties_file -%> \
 org.openqa.grid.selenium.GridLauncher \
 -role node \
 -host ${NODE_HOST} \
@@ -214,7 +214,7 @@ EEE
 java ${JVM_ARGS} \
 -classpath \
 ${SELENIUM_HOME}/log4j-1.2.17.jar:${SELENIUM_HOME}/${JAR_FILENAME} \
--Dlog4j.configuration=file://${SELENIUM_HOME}/<%= @log4j_properties_file %> \
+-Dlog4j.configuration=file://${SELENIUM_HOME}/<%= @log4j_properties_file -%> \
 org.openqa.grid.selenium.GridLauncher \
 -role node \
 -host ${NODE_HOST} \

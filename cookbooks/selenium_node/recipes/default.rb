@@ -109,14 +109,15 @@ end
 %w{selenium_node}.each do |init_script| 
 
   # Create Selenium Node service script configuratrion required for provider.
-  file "/etc/init/#{init_script}.conf"  do
-    owner 'root'
-    group 'root'
-    mode 00755
-    action :create_if_missing
-    only_if node['platform_version'].to_i >= 14   
+  if node[:platform_version].to_i >= 14   
+    file "/etc/init/#{init_script}.conf"  do
+      owner 'root'
+      group 'root'
+      mode 00755
+      action :create_if_missing
+      # only_if node[:platform_version].to_i >= 14   
+    end
   end
-
   # Create service init script for Selenium Node
   template ("/etc/init.d/#{init_script}") do 
     source 'initscript.erb'
@@ -194,7 +195,7 @@ end
 # Start Selenium Node service
 %w{selenium_node}.each do |service_name|
   service service_name do
-    if node['platform_version'].to_i < 14 
+    if node[:platform_version].to_i < 14 
       provider Chef::Provider::Service::Debian
     else
       provider Chef::Provider::Service::Upstart
