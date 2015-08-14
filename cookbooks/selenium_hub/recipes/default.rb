@@ -1,64 +1,69 @@
 log 'Installing Selenium hub' do
   level :info
 end
+# TODO 
+# node['selenium_hub']['account_username']    = node['vnc']['account_username']
+# node['selenium_hub']['selenium']['version'] = node['selenium']['selenium']['version']
+# node['selenium_hub']['hub_port'] = node['selenium_node']['hub_port']
 
 # Define variables for attributes
-account_username = node['vnc']['account_username'];
-account_home     = "/home/#{account_username}";
-selenium_home = "#{account_home}/selenium"
-account_home     = "/home/#{account_username}";
-selenium_home = "#{account_home}/selenium"
-selenium_version  = node['selenium']['selenium']['version']
-standalone_script = 'run-hub.sh'
-log4j_properties_file = 'hub.log4j.properties'
-log4j_xml= 'log4j.xml'
-logfile = 'hub.log'
-logger = 'INFO'
-jar_filename = 'selenium.jar'
+
+account_username      = node['selenium_hub']['account_username']
+account_home          = "/home/#{account_username}"
+selenium_home         = "#{account_home}/selenium"
+account_home          = "/home/#{account_username}"
+selenium_home         = "#{account_home}/selenium"
+selenium_version      = node['selenium_hub']['selenium']['version']
+standalone_script     = 'run-hub.sh'
+log_conf              = 'hub.log4j.properties'
+log4j_xml             = 'log4j.xml'
+logfile               = 'hub.log'
+logger                = 'INFO'
+jar_filename          = 'selenium.jar'
 
 %w{selenium_hub}.each do |init_script| 
 
   # Create selenium node service script configuratrion required for provider.
   if  node[:platform_version].to_i >= 14
     file "/etc/init/#{init_script}.conf" do
-      owner 'root'
-      group 'root'
-      mode 00755 
+      owner  'root'
+      group  'root'
+      mode   00755 
       action :create_if_missing
-     # only_if (node[:platform_version].to_i >= 14)
     end
   end
   # Create service init script for Selenium Hub
   template ("/etc/init.d/#{init_script}") do 
     source 'initscript.erb'
     variables(
-      :user_name => account_username,
-      :selenium_home => selenium_home,
-      :log4j_properties_file =>log4j_properties_file ,
-      :hub_port => node['selenium_node']['hub_port'],
-      :jar_filename  => jar_filename 
+      :user_name       => account_username,
+      :selenium_home   => selenium_home,
+      :log_conf        => log_conf,
+      :hub_port        => node['selenium_hub']['hub_port'],
+      :jar_filename    => jar_filename 
     ) 
     owner 'root'
     group 'root'
-    mode 00755
+    mode  00755
   end 
 end
+
 
 # Create Selenium folder
 directory selenium_home do
   owner account_username
   group account_username
-  mode  00755
+  mode      00755
   recursive true
-  action :create
+  action    :create
 end
 
 # Create standalone launcher script for debugging Selenium Hub
 template ("#{selenium_home}/#{standalone_script}") do 
   source 'standalone.erb'
   variables(
-    :log4j_properties_file =>log4j_properties_file ,
-    :hub_port => node['selenium_node']['hub_port'],
+    :log_conf      => log_conf ,
+    :hub_port      => node['selenium_hub']['hub_port'],
     :jar_filename  => jar_filename 
     ) 
   owner account_username
@@ -101,16 +106,16 @@ end
 end
 
 # Create log4j properties
-template "#{selenium_home}/#{log4j_properties_file}" do
+template "#{selenium_home}/#{log_conf}" do
   source 'log4j_properties.erb'
   variables(
-     :logger => logger,
+     :logger  => logger,
      :logfile => logfile
   )
-  owner account_username
-  group account_username
+  owner  account_username
+  group  account_username
   action :create_if_missing
-  mode 00644
+  mode   00644
 end
 
 log 'Finished configuring Selenium Hub.' do

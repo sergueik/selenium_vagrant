@@ -24,7 +24,7 @@ export ROLE=hub
 export JAVA_HOME='/usr/bin'
 SELENIUM_ARGS=`cat<<END_ARGS
 -classpath ${SELENIUM_HOME}/log4j-1.2.17.jar:${SELENIUM_HOME}/${JAR_FILENAME} \
--Dlog4j.configuration=file://${SELENIUM_HOME}/<%= @log4j_properties_file -%> \
+-Dlog4j.configuration=file://${SELENIUM_HOME}/<%= @log_conf -%> \
 org.openqa.grid.selenium.GridLauncher \
 -role ${ROLE} -port ${HUB_PORT}
 END_ARGS
