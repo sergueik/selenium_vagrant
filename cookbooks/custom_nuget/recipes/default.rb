@@ -2,15 +2,15 @@ log 'Started execution custom nuget.exe downloader' do
   level :info
 end
 
-package = '' 
-
-# install Nuget. There seems to be no msi package
-# this happens to be cwd of the Powershell script
 temp_dir  ='C:\\Users\\vagrant\\AppData\\Local\\Temp'
 system = node['kernel']['machine'] == 'x86_64' ? 'win64' : 'win32'
 download_url = node['custom_nuget']['download_url']
 filename =  node['custom_nuget']['filename']
 package_title = 'console nuget client'
+assemblies = %w/
+CsQuery
+Newtonsoft.Json
+/
 
 powershell "Download #{package_title}" do
   code <<-EOH
@@ -63,18 +63,26 @@ if ( -not (test-path -path $local_file )) {
 throw 'Failed to download file.'
 }
 
-
-
   EOH
-  # only if nuget is not already downloaded
   not_if {::File.exists?("#{temp_dir}/#{filename}".gsub('\\', '/'))}
 end
 
-assemblies = %w/
-CsQuery
-Newtonsoft.Json
-/
+log "Completed download #{package_title}" do
+  level :info
+end
 
+assemblies.each  do |assembly|
+  powershell "Install #{assembly}" do
+    code <<-EOH
+      $framework = 'net40'
+      pushd '#{temp_dir}'
+      $env:PATH = "${env:PATH};#{temp_dir}"
+      & nuget.exe install '#{assembly}' | out-file "#{temp_dir}\\nuget.log" -encoding ASCII -append
+      pushd '#{temp_dir}'
+      get-childitem -filter '#{assembly}.dll' -recurse | where-object { $_.PSPath -match '\\\\net40\\\\'} | copy-item -destination '.'
+  EOH
+  end
+end
 
 powershell 'Execute test script version with no json dependnecy' do
   code <<-EOH
@@ -127,26 +135,19 @@ namespace EventQuery
         }
 
 
-        public object[] QueryActiveLog()
+        public void QueryActiveLog()
         {
             // TODO: Extend structured query to two different event logs.
             EventLogQuery eventsQuery = new EventLogQuery("Application", PathType.LogName, Query);
             EventLogReader logReader = new EventLogReader(eventsQuery);
-            return DisplayEventAndLogInformation(logReader);
+            DisplayEventAndLogInformation(logReader);
         }
 
-        private object[] DisplayEventAndLogInformation(EventLogReader logReader)
+        private void DisplayEventAndLogInformation(EventLogReader logReader)
         {
-            ArrayList eventlog_json_arraylist = new ArrayList();
             for (EventRecord eventInstance = logReader.ReadEvent();
                 null != eventInstance; eventInstance = logReader.ReadEvent())
             {
-
-	
-                string eventlog_json = null;
-
-                eventlog_json_arraylist.Add(eventlog_json);
-
                 if (Verbose)
                 {
                     Console.WriteLine("-----------------------------------------------------");
@@ -181,24 +182,17 @@ namespace EventQuery
                     Console.WriteLine("Container Event Log: {0}", logRecord.ContainerLog);
                 }
             }
-            object[] result = eventlog_json_arraylist.ToArray();
-            return result;
         }
-
-
     }
 }
 
 "@ -ReferencedAssemblies 'System.dll', 'System.Security.dll', 'System.Core.dll' 
-# Newtonsoft.Json is extemently brittle
+# NOTE: Newtonsoft.Json is extemently brittle
 # http://stackoverflow.com/questions/22685530/could-not-load-file-or-assembly-newtonsoft-json-or-one-of-its-dependencies-ma
-# switch to http://www.codeproject.com/Articles/785293/Json-Parser-Viewer-and-Serializer
 
-write-output 'Running embedded assembly:'
+Write-Output 'Running embedded assembly:'
 
 $o = new-object 'EventQuery.EventQueryExampleEmbedded' -erroraction 'SilentlyContinue'
-
-
 
 $o.Query = @"
 <QueryList>
@@ -210,19 +204,16 @@ $o.Query = @"
 $o.Verbose = $true
 write-output ("Query:`r`n{0}" -f $o.Query)
 try{
-$r = $o.QueryActiveLog() 
+  # NOTE: the output will not get captured
+  $o.QueryActiveLog()
 } catch [Exception] { 
 
 }
 
-write-output ('Result: {0} rows' -f $r.count)
-write-output 'Sample entry:'
-$r  | select-object -first 1  | convertfrom-json
-
   EOH
 end
 
-log 'Completed execution various custom powershell scripts.' do
+log 'Completed execution custom powershell scripts with Nuget-provided dependency.' do
   level :info
 end
 
