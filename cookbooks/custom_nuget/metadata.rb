@@ -1,0 +1,10 @@
+name 'custom_nuget'
+maintainer       'maintainer'
+maintainer_email 'kouzmine_serguei@carnival.com'
+license          'All rights reserved'
+description      'Downloads standalone nuget.exe to manage subsequent dependencies'
+long_description IO.read(File.join(File.dirname(__FILE__), 'README.md'))
+version          '0.0.1'
+supports         'windows'
+depends          'windows', '>= 1.2.8'
+depends          'powershell'

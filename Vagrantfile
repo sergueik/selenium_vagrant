@@ -5,7 +5,7 @@
 vagrant_use_proxy = ENV.fetch('VAGRANT_USE_PROXY', nil)
 http_proxy = ENV.fetch('HTTP_PROXY', nil) 
 # Found that on some hosts ENV.fetch does not work 
-box_name = ENV.fetch('BOX_NAME', 'trusty64') 
+box_name = ENV.fetch('BOX_NAME', 'windows7') 
 basedir =  ENV.fetch('USERPROFILE', '')  
 basedir  = ENV.fetch('HOME', '') if basedir == ''
 basedir = basedir.gsub('\\', '/')
@@ -175,11 +175,13 @@ END_SCRIPT1
   else 
     
     config.vm.provision :chef_solo do |chef|
+
       chef.data_bags_path = 'data_bags'
-      chef.add_recipe 'windows' 
-      chef.add_recipe 'powershell' 
-      # NOTE: 'powershell' is included by other recipes and added to '.gitignore' 
-      # processing output file during the execution of the recipe
+      # old base images: chef.version = '10.34.6'
+      # the following no longer needed
+      # chef.add_recipe 'windows' 
+      # chef.add_recipe 'powershell' 
+      chef.add_recipe 'custom_nuget'
       chef.add_recipe 'custom_powershell'
       # execute c# code embedded in Powershell which is embedded in a recipe resource
       chef.add_recipe 'abcpdf'
