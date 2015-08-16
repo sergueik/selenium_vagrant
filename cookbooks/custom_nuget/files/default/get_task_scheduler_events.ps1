@@ -1,6 +1,22 @@
-cd $env:TEMP
-add-type -path "$env:TEMP\Newtonsoft.Json.dll"
+$report = 'report.log'
+$DebugPreference = 'Continue'
+$assembly_name = 'Newtonsoft.Json.dll'
 
+
+function Get-ScriptDirectory {
+  $Invocation = (Get-Variable MyInvocation -Scope 1).Value
+  if ($Invocation.PSScriptRoot) {
+    $Invocation.PSScriptRoot
+  }
+  elseif ($Invocation.MyCommand.Path) {
+    Split-Path $Invocation.MyCommand.Path
+  } else {
+    $Invocation.InvocationName.Substring(0,$Invocation.InvocationName.LastIndexOf(''))
+  }
+}
+
+Write-Debug "Loading external assembly ${assembly_name}"
+add-type -path ([System.IO.Path]::Combine( (Get-ScriptDirectory), $assembly_name))
 
 Add-Type -IgnoreWarnings @"
 
@@ -30,8 +46,8 @@ namespace EventQuery
         }
 
         private String _query = @"<QueryList>" +
-                  "<Query Id=\"0\" Path=\"Microsoft-Windows-TaskScheduler/Operational\">" +
-                  "<Select Path=\"Microsoft-Windows-TaskScheduler/Operational\">" +
+                  "<Query Id='0' Path='Microsoft-Windows-TaskScheduler/Operational'>" +
+                  "<Select Path='Microsoft-Windows-TaskScheduler/Operational'>" +
                   "*[System[(Level=1  or Level=2 or Level=3 or Level=4) and " +
                   "TimeCreated[timediff(@SystemTime) &lt;= 14400000]]]" + "</Select>" +
                   "</Query>" +
@@ -46,10 +62,7 @@ namespace EventQuery
             {
                 _query = value;
             }
-
         }
-
-
         public object[] QueryActiveLog()
         {
             // TODO: Extend structured query to two different event logs.
@@ -115,32 +128,31 @@ namespace EventQuery
     }
 }
 
-"@ -ReferencedAssemblies 'System.dll', 'System.Security.dll', 'System.Core.dll', "$env:TEMP\Newtonsoft.Json.dll"
-# Newtonsoft.Json is extemently brittle
-# http://stackoverflow.com/questions/22685530/could-not-load-file-or-assembly-newtonsoft-json-or-one-of-its-dependencies-ma
-# switch to http://www.codeproject.com/Articles/785293/Json-Parser-Viewer-and-Serializer
+"@ -ReferencedAssemblies 'System.dll', 'System.Security.dll', 'System.Core.dll', ([System.IO.Path]::Combine( (Get-ScriptDirectory), $assembly_name))
 
-write-output 'Running embedded assembly:' | out-file 'report.log' -append -encoding 'ASCII'
+write-Debug 'Running embedded assembly:'
 
-$o = new-object 'EventQuery.EventQueryExampleEmbedded' -erroraction 'SilentlyContinue'
+$helper = new-object 'EventQuery.EventQueryExampleEmbedded' -erroraction 'SilentlyContinue'
 
-
-$o.Query = @"
+$helper.Query = @"
 <QueryList>
-<Query Id="0" Path="Microsoft-Windows-TaskScheduler/Operational">
-<Select Path="Microsoft-Windows-TaskScheduler/Operational">*[System[Level=4 and TimeCreated[timediff(@SystemTime) &lt;= 1800000]]]</Select>
+<Query Id='0' Path='Microsoft-Windows-TaskScheduler/Operational'>
+<Select Path='Microsoft-Windows-TaskScheduler/Operational'>*[System[Level=4 and TimeCreated[timediff(@SystemTime) &lt;= 1800000]]]</Select>
 </Query>
 </QueryList>
 "@
-$o.Verbose = $false
-write-output ("Query:`r`n{0}" -f $o.Query) | out-file 'report.log' -append -encoding 'ASCII'
+$helper.Verbose = $false
+Write-Debug ("Query:`r`n{0}" -f $helper.Query)
 try{
-$r = $o.QueryActiveLog() 
+  $result = $helper.QueryActiveLog() 
 } catch [Exception] { 
 
 }
 
-write-output ('Result: {0} rows' -f $r.count) | out-file 'report.log' -append -encoding 'ASCII'
-write-output 'Sample entry:'| out-file 'report.log' -append -encoding 'ASCII'
-$r  | select-object -first 1  | convertfrom-json | out-file 'report.log' -append -encoding 'ASCII'
+Write-Debug ('Result: {0} rows' -f $result.count) 
+Write-Debug ('Saving sample entry to {0}'  -f $report)
+Write-Output $result | select-object -first 1  | convertfrom-json 
+
+write-output '' | out-file $report -encoding 'ASCII'
+$result | select-object -first 1 | out-file $report -append -encoding 'ASCII'
 
