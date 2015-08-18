@@ -5,14 +5,25 @@
 vagrant_use_proxy = ENV.fetch('VAGRANT_USE_PROXY', nil)
 http_proxy = ENV.fetch('HTTP_PROXY', nil) 
 # Found that on some hosts ENV.fetch does not work 
-box_name = ENV.fetch('BOX_NAME', 'windows7') 
+box_name = ENV.fetch('BOX_NAME', '') 
+box_memory = ENV.fetch('BOX_MEMORY', '1024') 
+box_cpus = ENV.fetch('BOX_CPUS', '1') 
+box_gui = ENV.fetch('BOX_GUI', 'true') 
+
+unless box_name =~ /\S/
+  # Load per-dev custom vagrant config
+  custom_vagrantfile = 'Vagrantfile.local'
+  if File.exist?(custom_vagrantfile) 
+    puts "Loading '#{custom_vagrantfile}'"
+    config = Hash[File.read(File.expand_path(custom_vagrantfile)).scan(/(.+?) *= *(.+)/)]
+    box_name = config['box_name']
+  end
+end 
+puts "box_name=#{box_name}"
 basedir =  ENV.fetch('USERPROFILE', '')  
 basedir  = ENV.fetch('HOME', '') if basedir == ''
 basedir = basedir.gsub('\\', '/')
 
-box_memory = ENV.fetch('BOX_MEMORY', '1024') 
-box_cpus = ENV.fetch('BOX_CPUS', '1') 
-box_gui = ENV.fetch('BOX_GUI', 'true') 
 
 VAGRANTFILE_API_VERSION = '2'
  
