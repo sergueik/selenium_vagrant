@@ -1,2 +1,37 @@
+# configuration for Ubuntu  14.04 x86
 box_name = 'trusty32'
+box_memory = 512
+box_cpus = 1
+box_gui = false
+
+# configuration for Ubuntu  14.04 x64
+# box_name = 'trusty64'
+# box_memory = 512
+# box_cpus = 1
+# box_gui = false
+
+# configuration for Ubuntu  12.04 x86
+# box_name = 'precise32'
+# box_memory = 512
+# box_cpus = 1
+# box_gui = false
+
+# configuration for Ubuntu  12.04 x64
+# box_name = 'precise64'
+# box_memory = 512
+# box_cpus = 1
+# box_gui = false
+
+# configuration for Centos
+# box_name = 'centos65'
+# box_memory = 512
+# box_cpus = 1
+# box_gui = false
+
+# configuration for windows 7 
+# box_name = 'windows7'
+# box_memory = 1024
+# box_cpus = 1
+# box_gui = true
+
 

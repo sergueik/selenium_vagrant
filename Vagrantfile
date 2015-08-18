@@ -6,24 +6,45 @@ vagrant_use_proxy = ENV.fetch('VAGRANT_USE_PROXY', nil)
 http_proxy = ENV.fetch('HTTP_PROXY', nil) 
 # Found that on some hosts ENV.fetch does not work 
 box_name = ENV.fetch('BOX_NAME', '') 
-box_memory = ENV.fetch('BOX_MEMORY', '1024') 
-box_cpus = ENV.fetch('BOX_CPUS', '1') 
-box_gui = ENV.fetch('BOX_GUI', 'true') 
+debug = ENV.fetch('DEBUG', 'false') 
+box_memory = ENV.fetch('BOX_MEMORY', '') 
+box_cpus = ENV.fetch('BOX_CPUS', '') 
+box_gui = ENV.fetch('BOX_GUI', '') 
 
 unless box_name =~ /\S/
-  # Load per-dev custom vagrant config
+  # Load custom vagrant config
   custom_vagrantfile = 'Vagrantfile.local'
   if File.exist?(custom_vagrantfile) 
     puts "Loading '#{custom_vagrantfile}'"
-    config = Hash[File.read(File.expand_path(custom_vagrantfile)).scan(/(.+?) *= *(.+)/)]
+    # shorti-circuit for single-entry configs
+    # config = Hash[File.read(File.expand_path(custom_vagrantfile)).scan(/(.+?) *= *(.+)/)]
+    config = {}
+    File.read(File.expand_path(custom_vagrantfile)).split(/\n/).each do |line| 
+       if line !~ /^#/
+         key_val = line.scan(/(.+?) *= *(.+)/)
+         config.merge!(Hash[key_val])
+       end
+    end
+    if debug
+      puts config.inspect
+    end
+    # Load configuration 
     box_name = config['box_name']
+    box_gui = config['box_gui'].match(/(true|t|yes|y|1)$/i) != nil
+    box_cpus = config['box_cpus'].to_i
+    box_memory = config['box_memory'].to_i
+  else
+    # TODO: throw an error
   end
 end 
 puts "box_name=#{box_name}"
+puts "box_gui=#{box_gui}"
+puts "box_cpus=#{box_cpus}"
+puts "box_memory=#{box_memory}"
+
 basedir =  ENV.fetch('USERPROFILE', '')  
 basedir  = ENV.fetch('HOME', '') if basedir == ''
 basedir = basedir.gsub('\\', '/')
-
 
 VAGRANTFILE_API_VERSION = '2'
  
@@ -49,27 +70,28 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
 # Locate the box
 case box_name 
    when /centos/ 
-     config.vm.box_url = "file://#{basedir}/Downloads/centos-6.5-x86_64.box"
+     # TODO: centos7
      config.vm.box = 'centos65'
+     config.vm.box_url = "file://#{basedir}/Downloads/centos-6.5-x86_64.box"
    when /trusty32/ 
-     config.vm.box_url = "file://#{basedir}/Downloads/trusty-server-cloudimg-i386-vagrant-disk1.box"
      config.vm.box = 'ubuntu/trusty32'
+     config.vm.box_url = "file://#{basedir}/Downloads/trusty-server-cloudimg-i386-vagrant-disk1.box"
    when /trusty64/ 
-     config.vm.box_url = "file://#{basedir}/Downloads/trusty-server-cloudimg-amd64-vagrant-disk1.box"
      config.vm.box = 'ubuntu/trusty64'   
+     config.vm.box_url = "file://#{basedir}/Downloads/trusty-server-cloudimg-amd64-vagrant-disk1.box"
      when /precise64/ 
-     config.vm.box_url = "file://#{basedir}/Downloads/precise-server-cloudimg-amd64-vagrant-disk1.box"
      config.vm.box = 'ubuntu/precise64'
+     config.vm.box_url = "file://#{basedir}/Downloads/precise-server-cloudimg-amd64-vagrant-disk1.box"
   else 
+     config.vm.box = 'windows7'
      # For Windows use tweaked modern.ie box
      # To change Windows into a vagrant manageable box see
      # https://gist.github.com/uchagani/48d25871e7f306f1f8af
      # https://groups.google.com/forum/#!topic/vagrant-up/PpRelVs95tM 
      config.vm.box_url = "file://#{basedir}/Downloads/vagrant-win7-ie10-updated.box"
-     config.vm.box = 'windows7'
   end
   # Configure guest-specific port forwarding
-  if config.vm.box =~ /ubuntu|redhat|debian|centos/ 
+  if config.vm.box !~ /windows/ 
     if config.vm.box =~ /centos/ 
       config.vm.network 'forwarded_port', guest: 8080, host: 8080, id: 'artifactory', auto_correct:true
     end
@@ -111,7 +133,6 @@ case box_name
     vb.customize ['modifyvm', :id, '--usb', 'off']
   end
 
-
   # config.berkshelf.berksfile_path = 'cookbooks/wrapper_java/Berksfile'
   # config.berkshelf.enabled = true
 
@@ -121,7 +142,7 @@ case box_name
    when /ubuntu|debian/ 
     config.vm.provision :chef_solo do |chef|
       # http://stackoverflow.com/questions/31149600/undefined-method-cheffish-for-nilnilclass-when-provisioning-chef-with-vagra
-      chef.version = '12.3.0'
+      chef.version = '12.4.0'
 # provided by Berkshelf
 #      chef.add_recipe 'chef-server'
     
