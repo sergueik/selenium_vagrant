@@ -21,7 +21,7 @@ unless box_name =~ /\S/
     config = {}
     File.read(File.expand_path(custom_vagrantfile)).split(/\n/).each do |line| 
        if line !~ /^#/
-         key_val = line.scan(/(.+?) *= *(.+)/)
+         key_val = line.scan(/^ *(.+?) *= *(.+) */)
          config.merge!(Hash[key_val])
        end
     end
@@ -30,7 +30,7 @@ unless box_name =~ /\S/
     end
     # Load configuration 
     box_name = config['box_name']
-    box_gui = config['box_gui'].match(/(true|t|yes|y|1)$/i) != nil
+    box_gui = config['box_gui'] != nil && config['box_gui'].match(/(true|t|yes|y|1)$/i) != nil
     box_cpus = config['box_cpus'].to_i
     box_memory = config['box_memory'].to_i
   else
@@ -67,12 +67,17 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
     end 
   end
 
-# Locate the box
+# Localy cached images from
+# http://www.vagrantbox.es/
+# http://dev.modern.ie/tools/vms/linux/
+# TODO: make precise the default
 case box_name 
-   when /centos/ 
-     # TODO: centos7
-     config.vm.box = 'centos65'
+   when /centos6/ 
+     config.vm.box = 'centos/65'
      config.vm.box_url = "file://#{basedir}/Downloads/centos-6.5-x86_64.box"
+   when /centos7/ 
+     config.vm.box = 'centos/7'
+     config.vm.box_url = "file://#{basedir}/Downloads/centos-7.0-x86_64.box"
    when /trusty32/ 
      config.vm.box = 'ubuntu/trusty32'
      config.vm.box_url = "file://#{basedir}/Downloads/trusty-server-cloudimg-i386-vagrant-disk1.box"
@@ -83,11 +88,10 @@ case box_name
      config.vm.box = 'ubuntu/precise64'
      config.vm.box_url = "file://#{basedir}/Downloads/precise-server-cloudimg-amd64-vagrant-disk1.box"
   else 
-     config.vm.box = 'windows7'
-     # For Windows use tweaked modern.ie box
-     # To change Windows into a vagrant manageable box see
+     # tweak modern.ie image into a vagrant manageable box
      # https://gist.github.com/uchagani/48d25871e7f306f1f8af
      # https://groups.google.com/forum/#!topic/vagrant-up/PpRelVs95tM 
+     config.vm.box = 'windows7'
      config.vm.box_url = "file://#{basedir}/Downloads/vagrant-win7-ie10-updated.box"
   end
   # Configure guest-specific port forwarding
@@ -138,8 +142,8 @@ case box_name
 
   # Provision software
   case config.vm.box.to_s 
-   # Use chef provisioner with ubuntu
-   when /ubuntu|debian/ 
+   when /ubuntu|debian/
+    # Use chef provisioner with ubuntu
     config.vm.provision :chef_solo do |chef|
       # http://stackoverflow.com/questions/31149600/undefined-method-cheffish-for-nilnilclass-when-provisioning-chef-with-vagra
       chef.version = '12.4.0'
@@ -153,7 +157,7 @@ case box_name
       chef.add_recipe 'wrapper_java'
       chef.add_recipe 'wrapper_hostsfile'
       chef.add_recipe 'tweak_proxy_settings'
-##      # TODO - choose which X server to install
+      # TODO - choose which X server to install
       chef.add_recipe 'xvfb'
       chef.add_recipe 'wrapper_vnc'
       chef.add_recipe 'selenium_hub'
@@ -165,14 +169,12 @@ case box_name
       # chef.add_recipe 'custom_cpan_modules'
       chef.log_level = 'info' 
     end
-  # Use shell provisioner with centos
-  when /centos/ 
-
+  when /centos/
+    # Use shell provisioner with centos
     config.vm.provision 'shell', path: 'centos_common_provision.sh'
-
-    # Remove and install jdk from locally hosted artifactory repository 
+    # 1. Remove and install jdk from locally hosted artifactory repository      
     config.vm.provision 'shell', inline: <<END_SCRIPT1
- 
+
 export YUM_FLAG=-y
 
 export JAVA_VERSION=$(java -version 2>& 1| head -1)
@@ -192,35 +194,25 @@ fi
 
 END_SCRIPT1
 
-    # Provision Latest Docker
+    # 2. Provision Latest Docker
     config.vm.provision 'shell', inline: 'sudo yum -y install docker-io'
 
-    # Add Artifactory Docker Registry
+    # 3. Add Artifactory Docker Registry
     config.vm.provision 'file', source: '.dockercfg', destination: '~/.dockercfg'
-    # Setup local artifactory repo - unfinished 
+    # 4. Setup local artifactory repo - unfinished 
     config.vm.provision :chef_solo do |chef|
       chef.data_bags_path = 'data_bags'
       chef.add_recipe 'wrapper_yum'
     end
-
-  # For Windows use Chef and Powershell provisioner - unfinished
-  else 
-    
+  else
+    # Use chef provisioner and powershell with windows
     config.vm.provision :chef_solo do |chef|
-
       chef.data_bags_path = 'data_bags'
-      # old base images: chef.version = '10.34.6'
-      # the following no longer needed
-      # chef.add_recipe 'windows' 
-      # chef.add_recipe 'powershell' 
       chef.add_recipe 'custom_nuget'
       chef.add_recipe 'custom_powershell'
-      # execute c# code embedded in Powershell which is embedded in a recipe resource
-      chef.add_recipe 'abcpdf'
+      # chef.add_recipe 'abcpdf'
       chef.log_level = 'info' 
     end
   end
 end
 
-# VAGRANT_LOG=debug vagrant up > debug.log 2>&1
-# 
