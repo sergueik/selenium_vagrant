@@ -10,6 +10,7 @@ debug = ENV.fetch('DEBUG', 'false')
 box_memory = ENV.fetch('BOX_MEMORY', '') 
 box_cpus = ENV.fetch('BOX_CPUS', '') 
 box_gui = ENV.fetch('BOX_GUI', '') 
+debug = (debug =~ (/^(true|t|yes|y|1)$/i))
 
 unless box_name =~ /\S/
   # Load custom vagrant config
@@ -128,7 +129,7 @@ case box_name
   config.vm.network 'forwarded_port', guest: 3000, host: 3000, id: 'reactor', auto_correct:true
   
   config.vm.provider 'virtualbox' do |vb|
-    vb.gui = (box_gui =~ (/^(true|t|yes|y|1)$/i))
+    vb.gui = box_gui 
     vb.customize ['modifyvm', :id, '--cpus', box_cpus ]
     vb.customize ['modifyvm', :id, '--memory', box_memory ]
     vb.customize ['modifyvm', :id, '--clipboard', 'bidirectional']
