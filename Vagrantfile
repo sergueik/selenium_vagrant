@@ -89,11 +89,13 @@ case box_name
      config.vm.box = 'ubuntu/precise64'
      config.vm.box_url = "file://#{basedir}/Downloads/precise-server-cloudimg-amd64-vagrant-disk1.box"
   else 
+     config.vm.box = 'windows10'
+     config.vm.box_url = "file://#{basedir}/Downloads/vagrant-win10-edge-default.box"
      # tweak modern.ie image into a vagrant manageable box
      # https://gist.github.com/uchagani/48d25871e7f306f1f8af
      # https://groups.google.com/forum/#!topic/vagrant-up/PpRelVs95tM 
-     config.vm.box = 'windows7'
-     config.vm.box_url = "file://#{basedir}/Downloads/vagrant-win7-ie10-updated.box"
+     # config.vm.box = 'windows7'
+     # config.vm.box_url = "file://#{basedir}/Downloads/vagrant-win7-ie10-updated.box"
   end
   # Configure guest-specific port forwarding
   if config.vm.box !~ /windows/ 
