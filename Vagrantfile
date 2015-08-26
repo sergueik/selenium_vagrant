@@ -92,6 +92,7 @@ case box_name
      config.vm.box = 'windows10'
      config.vm.box_url = "file://#{basedir}/Downloads/vagrant-win10-edge-default.box"
      # tweak modern.ie image into a vagrant manageable box
+     # https://github.com/WinRb/vagrant-windows
      # https://gist.github.com/uchagani/48d25871e7f306f1f8af
      # https://groups.google.com/forum/#!topic/vagrant-up/PpRelVs95tM 
      # config.vm.box = 'windows7'
