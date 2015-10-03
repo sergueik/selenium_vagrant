@@ -3,7 +3,7 @@ require 'json'
 
 # https://github.com/sethvargo/chefspec
 
-describe 'wrapper_google-chrome::default' do
+describe 'wrapper_chrome::default' do
   before(:each) do
     @track = 'stable';
   end

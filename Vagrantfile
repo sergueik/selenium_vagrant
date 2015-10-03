@@ -1,35 +1,34 @@
 # -*- mode: ruby -*-
 # vi: set ft=ruby :
 
-# Custom environment settings to enable this Vagrantfile to boot various flavours of Linux or Windows from Linux or Windows host
+basedir = ENV.fetch('USERPROFILE', '')  
+basedir = ENV.fetch('HOME', '') if basedir == ''
+basedir = basedir.gsub('\\', '/')
+
 vagrant_use_proxy = ENV.fetch('VAGRANT_USE_PROXY', nil)
-http_proxy = ENV.fetch('HTTP_PROXY', nil) 
-# Found that on some hosts ENV.fetch does not work 
-box_name = ENV.fetch('BOX_NAME', '') 
-debug = ENV.fetch('DEBUG', 'false') 
-box_memory = ENV.fetch('BOX_MEMORY', '') 
-box_cpus = ENV.fetch('BOX_CPUS', '') 
-box_gui = ENV.fetch('BOX_GUI', '') 
-debug = (debug =~ (/^(true|t|yes|y|1)$/i))
+http_proxy        = ENV.fetch('HTTP_PROXY', nil) 
+box_name          = ENV.fetch('BOX_NAME', '') 
+debug             = ENV.fetch('DEBUG', 'false') 
+box_memory        = ENV.fetch('BOX_MEMORY', '') 
+box_cpus          = ENV.fetch('BOX_CPUS', '') 
+box_gui           = ENV.fetch('BOX_GUI', '') 
+debug             = (debug =~ (/^(true|t|yes|y|1)$/i))
 
 unless box_name =~ /\S/
-  # Load custom vagrant config
   custom_vagrantfile = 'Vagrantfile.local'
   if File.exist?(custom_vagrantfile) 
     puts "Loading '#{custom_vagrantfile}'"
-    # shorti-circuit for single-entry configs
     # config = Hash[File.read(File.expand_path(custom_vagrantfile)).scan(/(.+?) *= *(.+)/)]
     config = {}
     File.read(File.expand_path(custom_vagrantfile)).split(/\n/).each do |line| 
-       if line !~ /^#/
-         key_val = line.scan(/^ *(.+?) *= *(.+) */)
-         config.merge!(Hash[key_val])
-       end
+      if line !~ /^#/
+        key_val = line.scan(/^ *(.+?) *= *(.+) */)
+        config.merge!(Hash[key_val])
+      end
     end
     if debug
       puts config.inspect
     end
-    # Load configuration 
     box_name = config['box_name']
     box_gui = config['box_gui'] != nil && config['box_gui'].match(/(true|t|yes|y|1)$/i) != nil
     box_cpus = config['box_cpus'].to_i
@@ -38,16 +37,16 @@ unless box_name =~ /\S/
     # TODO: throw an error
   end
 end 
-puts "box_name=#{box_name}"
-puts "box_gui=#{box_gui}"
-puts "box_cpus=#{box_cpus}"
-puts "box_memory=#{box_memory}"
 
-basedir =  ENV.fetch('USERPROFILE', '')  
-basedir  = ENV.fetch('HOME', '') if basedir == ''
-basedir = basedir.gsub('\\', '/')
+if debug
+  puts "box_name=#{box_name}"
+  puts "box_gui=#{box_gui}"
+  puts "box_cpus=#{box_cpus}"
+  puts "box_memory=#{box_memory}"
+end
 
 VAGRANTFILE_API_VERSION = '2'
+
  
 Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
   # Configure Proxy authentication
@@ -150,14 +149,14 @@ case box_name
     # Use chef provisioner with ubuntu
     config.vm.provision :chef_solo do |chef|
       # http://stackoverflow.com/questions/31149600/undefined-method-cheffish-for-nilnilclass-when-provisioning-chef-with-vagra
-      chef.version = '12.4.0'
+      # cheffish bug in 12.4.1
+      chef.version = '12.3.0'
 # provided by Berkshelf
 #      chef.add_recipe 'chef-server'
     
 
       chef.data_bags_path = 'data_bags'
-      chef.add_recipe 'wrapper_google-chrome'
-      chef.add_recipe 'java'
+      chef.add_recipe 'wrapper_chrome'
       chef.add_recipe 'wrapper_java'
       chef.add_recipe 'wrapper_hostsfile'
       chef.add_recipe 'tweak_proxy_settings'
@@ -168,7 +167,6 @@ case box_name
       chef.add_recipe 'selenium_node'
       chef.add_recipe 'firebug'
       # NOTE: time-consuming
-      # TODO: refactor Vagrantfile
       # chef.add_recipe 'perl'
       # chef.add_recipe 'custom_cpan_modules'
       chef.log_level = 'info' 
