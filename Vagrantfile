@@ -67,35 +67,58 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
     end 
   end
 
-# Localy cached images from
-# http://www.vagrantbox.es/
-# http://dev.modern.ie/tools/vms/linux/
-# TODO: make precise the default
-case box_name 
-   when /centos6/ 
-     config.vm.box = 'centos/65'
+  # Localy cached images from http://www.vagrantbox.es/ and  http://dev.modern.ie/tools/vms/linux/
+  # for tweaking modern.ie images into a vagrant manageable box see
+  # https://gist.github.com/uchagani/48d25871e7f306f1f8af
+  # https://groups.google.com/forum/#!topic/vagrant-up/PpRelVs95tM 
+  case box_name 
+
+   when /centos65_i386/ 
+     config.vm.box     = 'centos'
+     config.vm.default = 'linux'
+     config.vm.box_url = "file://#{basedir}/Downloads/centos_6-5_i386.box"
+   when /centos66_x64/ 
+     config.vm.box     = 'centos'
+     config.vm.default = 'linux'
+     # https://github.com/tommy-muehle/puppet-vagrant-boxes/releases/download/1.0.0/centos-6.6-x86_64.box
+     config.vm.box_url = "file://#{basedir}/Downloads/centos-6.6-x86_64.box"
+   when /centos65_x64/  # Puppet not preinstalled
+     config.vm.box     = 'centos'
+     config.vm.default = 'linux'
      config.vm.box_url = "file://#{basedir}/Downloads/centos-6.5-x86_64.box"
    when /centos7/ 
-     config.vm.box = 'centos/7'
+     config.vm.box     = 'centos'
+     config.vm.default = 'linux'
      config.vm.box_url = "file://#{basedir}/Downloads/centos-7.0-x86_64.box"
    when /trusty32/ 
-     config.vm.box = 'ubuntu/trusty32'
+     config.vm.box     = 'ubuntu'
      config.vm.box_url = "file://#{basedir}/Downloads/trusty-server-cloudimg-i386-vagrant-disk1.box"
    when /trusty64/ 
-     config.vm.box = 'ubuntu/trusty64'   
+     config.vm.box     = 'ubuntu'   
+     config.vm.default = 'linux'
      config.vm.box_url = "file://#{basedir}/Downloads/trusty-server-cloudimg-amd64-vagrant-disk1.box"
-     when /precise64/ 
-     config.vm.box = 'ubuntu/precise64'
-     config.vm.box_url = "file://#{basedir}/Downloads/precise-server-cloudimg-amd64-vagrant-disk1.box"
+   when /precise64/ 
+     config.vm.box     = 'ubuntu'
+     config.vm.default = 'linux'
+     # config.vm.box_url = "file://#{basedir}/Downloads/precise-server-cloudimg-amd64-vagrant-disk1.box"
+     config.vm.box_url = "file://#{basedir}/Downloads/ubuntu-server-12042-x64-vbox4210.box"
   else 
-     config.vm.box = 'windows10'
-     config.vm.box_url = "file://#{basedir}/Downloads/vagrant-win10-edge-default.box"
-     # tweak modern.ie image into a vagrant manageable box
-     # https://github.com/WinRb/vagrant-windows
-     # https://gist.github.com/uchagani/48d25871e7f306f1f8af
-     # https://groups.google.com/forum/#!topic/vagrant-up/PpRelVs95tM 
-     # config.vm.box = 'windows7'
-     # config.vm.box_url = "file://#{basedir}/Downloads/vagrant-win7-ie10-updated.box"
+    config.vm.default = 'windows' 
+    # to save provisioning time
+    # set to true when imporging brand new box, false otherwise
+    config.vm.newbox = true
+    if box_name =~ /2008/
+      # https://atlas.hashicorp.com/opentable/boxes/win-2008r2-standard-amd64-nocm/versions/1.0.1/providers/virtualbox.box 
+      config.vm.box     = 'windows_2008'
+      config.vm.box_url = "file://#{basedir}/Downloads/windows-2008R2-serverstandard-amd64_virtualbox.box"
+    elsif box_name =~ /2012/
+      #https://atlas.hashicorp.com/kensykora/boxes/windows_2012_r2_standard/versions/0.7.0/providers 
+      config.vm.box     = 'windows_2012'
+      config.vm.box_url = "file://#{basedir}/Downloads/windows_2012_r2_standard.box"
+    else
+     config.vm.box     = 'windows7'
+     config.vm.box_url = "file://#{basedir}/Downloads/vagrant-win7-ie10-updated.box"
+    end 
   end
   # Configure guest-specific port forwarding
   if config.vm.box !~ /windows/ 
@@ -110,9 +133,7 @@ case box_name
     # WinRM::WinRMHTTPTransportError: Bad HTTP response returned from server (503) 
     # https://github.com/chef/knife-windows/issues/143
     ENV.delete('HTTP_PROXY')
-    # Note Windows Product Activation dialog  appears to block chef solo from doing anything and result in Vagrant failing with 
-    # Chef never successfully completed!
-
+    # NOTE: Windows Product Activation dialog appears to block chef solo from doing anything and result in Vagrant failing  
     config.vm.communicator = 'winrm'
     config.winrm.username = 'vagrant'
     config.winrm.password = 'vagrant'
@@ -126,10 +147,9 @@ case box_name
     config.windows.set_work_network = true
     # on Windows, use default data_bags share
   end
-  # Configure common port forwarding
+  # Configure common port forwarding for selenium
   config.vm.network 'forwarded_port', guest: 4444, host: 4444, id: 'selenium', auto_correct:true
-  config.vm.network 'forwarded_port', guest: 3000, host: 3000, id: 'reactor', auto_correct:true
-  
+  # config.vm.network 'forwarded_port', guest: 3000, host: 3000, id: 'reactor', auto_correct:true
   config.vm.provider 'virtualbox' do |vb|
     vb.gui = box_gui 
     vb.customize ['modifyvm', :id, '--cpus', box_cpus ]
@@ -148,13 +168,11 @@ case box_name
    when /ubuntu|debian/
     # Use chef provisioner with ubuntu
     config.vm.provision :chef_solo do |chef|
+      # for cheffish bug in 12.4.1 see
       # http://stackoverflow.com/questions/31149600/undefined-method-cheffish-for-nilnilclass-when-provisioning-chef-with-vagra
-      # cheffish bug in 12.4.1
       chef.version = '12.3.0'
-# provided by Berkshelf
-#      chef.add_recipe 'chef-server'
-    
-
+      # provided by Berkshelf
+      #      chef.add_recipe 'chef-server'
       chef.data_bags_path = 'data_bags'
       chef.add_recipe 'wrapper_chrome'
       chef.add_recipe 'wrapper_java'
