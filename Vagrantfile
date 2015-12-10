@@ -163,7 +163,15 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
     puts "Provision software for '#{config.vm.box}'"
     case config_vm_box
       when /centos/
-        # Use puppet provisioner with centos
+        # Use puppet provisioner with centos:
+        # https://forge.puppetlabs.com/BernardoSilva/xvfb
+        # https://forge.puppetlabs.com/p0deje/display
+        # https://forge.puppetlabs.com/arusso/vnc
+        # https://forge.puppetlabs.com/runthebusiness/tightvncserver
+        # https://forge.puppetlabs.com/puppetlabs/java
+        # https://forge.puppetlabs.com/jhoblitt/selenium
+        # https://forge.puppetlabs.com/danielgil/log4j
+        # https://forge.puppetlabs.com/elasticsearch/logstash
       when /ubuntu|debian/
         # Use chef provisioner with ubuntu
         config.vm.provision :chef_solo do |chef|
@@ -181,6 +189,7 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
           chef.add_recipe 'selenium_hub'
           chef.add_recipe 'selenium_node'
           chef.add_recipe 'firebug'
+          chef.add_recipe 'wrapper_groovy'
           # NOTE: time-consuming
           # chef.add_recipe 'perl'
           # chef.add_recipe 'custom_cpan_modules'
