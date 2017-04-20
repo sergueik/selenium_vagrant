@@ -36,28 +36,97 @@ end
 # TODO spoon stop <running containers>
 powershell  'Launch selenium-grid' do
   spoon_command = 'run base,spoonbrew/selenium-grid'
-  run_command = "'C:\\Program Files\\Spoon\\Cmd\\spoon.exe' #{spoon_command}"
+  command = "'C:\\Program Files\\Spoon\\Cmd\\spoon.exe' #{spoon_command}"
   taskname = 'Launch_selenium_grid_node'
   code <<-EOH
 
 $level = 'HIGHEST'
 $schedule = 'ONCE'
 $time = '00:00' # required, irrrevant
-$run_command = "#{run_command}"
+$command = "#{command}"
 $taskname = '#{taskname}'
-<#
-  $status = schtasks /query /TN $taskname| select-string -pattern "${taskname}"
-  write-output $status
+if ($command -eq ''){
+  $command = 'notepad.exe'
+}
+$delete_existing_schedules = $true
+
+function log{
+param(
+  [string]$message,
+  [string]$log_file  = '<%=@log-%>'
+ )
+    write-host $message
+    write-output $message | out-file $log_file -append -encoding ascii
+}
+
+log -message ('Launching task for "{0}"' -f $command)
+$env:PATH = [Environment]::GetEnvironmentVariable('Path', [System.EnvironmentVariableTarget]::Machine)
+
+if ($delete_existing_schedules) {
+  $status = schtasks /query /TN $taskname| select-string -pattern "${taskname}" 
+  log $status
   if ($status -ne $null){
-    write-host "${taskname} is present, deleting..."
-   & SchTasks.exe /Delete /TN $taskname /F
+   log -message "${taskname} is present, deleting..."
+   & schtasks /Delete /TN $taskname /F
+  } else { 
+    write-host "No ${taskname} is present...ignoring"
+    log -message "No ${taskname} is present...ignoring"
+  }
+}
+log ('Creating "{0}"' -f $taskname )
+& schtasks /Create  /TN $taskname /RL $level /TR $command /SC $schedule /ST $time
+log ('Starting "{0}"' -f $taskname )
+& schtasks /Run /TN $taskname
+$count = 1
+$max_count = 100
+$running = $false
+$finished = $false
+while($count -le $max_count ){
+  $count ++
+  $status = & schtasks /query /TN $taskname| select-string -pattern "${taskname}"
+  log $status
+  if ($status.tostring() -match '(Could not)'){
+    log "WARNING: ${taskname} has failed..."
+    break 
+  } elseif ($status.tostring() -match '(Ready)'){
+    log "NOTICE: ${taskname} is ready..."
+    $running = $true
+  } elseif ($status.tostring() -match '(Running)'){
+    log "SUCCESS: ${taskname} is running..."
+    $running = $true
     break 
   } else { 
-    write-host "No ${taskname} is present..."
-    break 
+    log "WARNING: ${taskname} is not yet running..."
   }
-#>
-& SchTasks.exe /Create  /TN $taskname /RL $level /TR $run_command /SC $schedule /ST $time
+  start-sleep -milliseconds 1000
+}
+# TODO : time management
+if ($running){
+  log "NOTICE: waiting for running ${taskname} to complete..."
+  $count = 1
+  $max_count = 10
+  while($count -le $max_count ){
+    $count ++
+    $status = & schtasks /query /TN $taskname| select-string -pattern "${taskname}"
+    log $status
+    if ($status.tostring() -match '(Could not|Failed)'){
+      log "WARNING: ${taskname} has failed..."
+      break 
+    } elseif ($status.tostring() -match '(Running)'){
+      log "NOTICE: ${taskname} is running..."
+    } else { 
+      log "SUCCESS: ${taskname} is finished..."
+      $finished = $true
+      break 
+    }
+    start-sleep -milliseconds 60000
+ }
+}
+log 'Complete'
+
+
+
+& SchTasks.exe /Create  /TN $taskname /RL $level /TR $command /SC $schedule /ST $time
 & SchTasks.exe /Run /TN $taskname
 
 while($true){
@@ -71,36 +140,103 @@ while($true){
   }
   start-sleep -milliseconds 1000
 }
+
   EOH
   action  :run
 end
-
+## WARNING - redundant code
 powershell  'Launch selenium-grid-node ie 10' do
   spoon_command = 'run base,spoonbrew/ie-selenium:10,spoonbrew/selenium-grid-node node ie 10'
-  run_command = "'C:\\Program Files\\Spoon\\Cmd\\spoon.exe' #{spoon_command}"
+  command = "'C:\\Program Files\\Spoon\\Cmd\\spoon.exe' #{spoon_command}"
   taskname = 'Launch_selenium_grid_node_ie_10'
   code <<-EOH
-
 $level = 'HIGHEST'
 $schedule = 'ONCE'
 $time = '00:00' # required, irrrevant
-
-$run_command = "#{run_command}"
+$command = "#{command}"
 $taskname = '#{taskname}'
+if ($command -eq ''){
+  $command = 'notepad.exe'
+}
+$delete_existing_schedules = $true
 
-<#
-  $status = schtasks /query /TN $taskname| select-string -pattern "${taskname}"
-  write-output $status
+function log{
+param(
+  [string]$message,
+  [string]$log_file  = '<%=@log-%>'
+ )
+    write-host $message
+    write-output $message | out-file $log_file -append -encoding ascii
+}
+
+log -message ('Launching task for "{0}"' -f $command)
+$env:PATH = [Environment]::GetEnvironmentVariable('Path', [System.EnvironmentVariableTarget]::Machine)
+
+if ($delete_existing_schedules) {
+  $status = schtasks /query /TN $taskname| select-string -pattern "${taskname}" 
+  log $status
   if ($status -ne $null){
-    write-host "${taskname} is present, deleting..."
-   & SchTasks.exe /Delete /TN $taskname /F
+   log -message "${taskname} is present, deleting..."
+   & schtasks /Delete /TN $taskname /F
+  } else { 
+    write-host "No ${taskname} is present...ignoring"
+    log -message "No ${taskname} is present...ignoring"
+  }
+}
+log ('Creating "{0}"' -f $taskname )
+& schtasks /Create  /TN $taskname /RL $level /TR $command /SC $schedule /ST $time
+log ('Starting "{0}"' -f $taskname )
+& schtasks /Run /TN $taskname
+$count = 1
+$max_count = 100
+$running = $false
+$finished = $false
+while($count -le $max_count ){
+  $count ++
+  $status = & schtasks /query /TN $taskname| select-string -pattern "${taskname}"
+  log $status
+  if ($status.tostring() -match '(Could not)'){
+    log "WARNING: ${taskname} has failed..."
+    break 
+  } elseif ($status.tostring() -match '(Ready)'){
+    log "NOTICE: ${taskname} is ready..."
+    $running = $true
+  } elseif ($status.tostring() -match '(Running)'){
+    log "SUCCESS: ${taskname} is running..."
+    $running = $true
     break 
   } else { 
-    write-host "No ${taskname} is present..."
-    break 
+    log "WARNING: ${taskname} is not yet running..."
   }
-#>
-& SchTasks.exe /Create  /TN $taskname /RL $level /TR $run_command /SC $schedule /ST $time
+  start-sleep -milliseconds 1000
+}
+# TODO : time management
+if ($running){
+  log "NOTICE: waiting for running ${taskname} to complete..."
+  $count = 1
+  $max_count = 10
+  while($count -le $max_count ){
+    $count ++
+    $status = & schtasks /query /TN $taskname| select-string -pattern "${taskname}"
+    log $status
+    if ($status.tostring() -match '(Could not|Failed)'){
+      log "WARNING: ${taskname} has failed..."
+      break 
+    } elseif ($status.tostring() -match '(Running)'){
+      log "NOTICE: ${taskname} is running..."
+    } else { 
+      log "SUCCESS: ${taskname} is finished..."
+      $finished = $true
+      break 
+    }
+    start-sleep -milliseconds 60000
+ }
+}
+log 'Complete'
+
+
+
+& SchTasks.exe /Create  /TN $taskname /RL $level /TR $command /SC $schedule /ST $time
 & SchTasks.exe /Run /TN $taskname
 
 while($true){

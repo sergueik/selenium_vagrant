@@ -4,13 +4,16 @@ test-output/
 .classpath
 .settings/
 .vagrant/
+cookbooks/7-zip
 cookbooks/apt
+cookbooks/ark
 cookbooks/aufs
 cookbooks/base
 cookbooks/build-essential
 cookbooks/chef_handler
 cookbooks/chef-nssm
 cookbooks/chef-selenium
+cookbooks/chrome
 cookbooks/databag_manager
 cookbooks/device-mapper
 cookbooks/dmg
@@ -22,6 +25,7 @@ cookbooks/firefox
 cookbooks/git
 cookbooks/golang
 cookbooks/google-chrome
+cookbooks/groovy
 cookbooks/homebrew
 cookbooks/hostsfile
 cookbooks/hostsfile
@@ -46,6 +50,7 @@ cookbooks/yum
 cookbooks/yum-epel
 .chef
 .project
+*.tgz
 *~
 .*.sw?
 .kitchen/

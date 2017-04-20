@@ -18,67 +18,14 @@ The `BOX_GUI` is recognized to allow gui(less)mode  - important for spoon.Net te
 The `VAGRANT_USE_PROXY` together with `HTTP_PROXY` is standard environment to deal with firewall. 
 
 
-Open Items 
-----------
+### Open Items 
 There is work in progress on adding chrome recipes to ubuntu, testing on centos, better error detection on windows7, especially  with spoon.Net layer
 
-Note
-----
+### Note
 There is a big number of dependency cookbooks, especially with centos. These are currently placed in the cookbooks directory and added to .gitignore. Occasuinally this may lead to a error in provisioning e.g. conflict between build-essential docker dependency that is processed on a windows guest as it were a mac.
 
-|cookbook|dependency of 
-| -------|:-------------:|
-|apt
-|aufs
-|base
-|build-essential
-|chef-nssm
-|chef-selenium
-|chef_handler
-|custom_cpan_modules
-|databag_manager
-|device-mapper
-|dmg
-|docker
-|docker_registry
-|dpkg_autostart
-|firebug
-|firefox
-|git
-|gitignote.txt
-|golang
-|homebrew
-|hostsfile
-|iptables
-|iptables-ng
-|java
-|log4j
-|lxc
-|modules
-|ms_dotnet2
-|ms_dotnet4
-|ms_dotnet45
-|ohai
-|polipo
-|powershell
-|python
-|runit
-|sample
-|selenium
-|selenium_hub
-|selenium_node
-|spoon
-|sysctl
-|tweak_proxy_settings
-|vnc
-|windows
-|wrapper_hostsfile
-|wrapper_java
-|wrapper_yum
-|xvfb
-|yum
-|yum-epel
-
+`apt`,`aufs`,`base`,`build-essential`,`chef-nssm`,`chef-selenium`,
+`chef_handler`,`custom_cpan_modules`,`databag_manager`,`device-mapper`,`dmg`,`docker`,`docker_registry`,`dpkg_autostart`,`firebug`,`firefox`,`git`,`gitignote.txt`,`golang`,`homebrew`,`hostsfile`,`iptables`,`iptables-ng`,`java`,`log4j`,`lxc`,`modules`,`ms_dotnet2`,`ms_dotnet4`,`ms_dotnet45`,`ohai`,`polipo`,`powershell`,`python`,`runit`,`sample`,`selenium`,`selenium_hub`,`selenium_node`,`spoon`,`sysctl`,`tweak_proxy_settings`,`vnc`,`windows`,`wrapper_hostsfile`,`wrapper_java`,`wrapper_yum`,`xvfb`,`yum`,`yum-epel`
 
 ### See also
 
