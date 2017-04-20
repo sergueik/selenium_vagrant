@@ -1,13 +1,11 @@
-Introduction
-------------
-Vagrant and Chef resources for setting up a box in Virtual Box running Java, Selenium, Spoon.Net, IE, Firefox, Phantom JS, and Chrome from Linux environment
+### Introduction
+Vagrant and Chef resources for setting up a box in Virtual Box running Java, Selenium, Firefox, Phantom JS, and Chrome under Linux
+and Spoon.Net and Selenium, Firefox, Chrome and IE under Windows
 
-
-Environment
------------
+### Environment
 Based on the `BOX_NAME` environment the following guest is created 
 
- - ubuntu 12.04, 14.05 32 and 64
+ - ubuntu 12.04, 14.05 32 and 64 bit
       base box with xvfb, xvnc, java runtime , selenium, firefox
  - centos65
       base box with docker, java runtime 
@@ -81,3 +79,10 @@ There is a big number of dependency cookbooks, especially with centos. These are
 |yum
 |yum-epel
 
+
+### See also
+
+[yandex-qatools/chef-selenium](https://github.com/yandex-qatools/chef-selenium)
+
+### Author
+[Serguei Kouzmine](kouzmine_serguei@yahoo.com)
