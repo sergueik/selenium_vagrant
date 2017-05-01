@@ -30,6 +30,7 @@ There is a big number of dependency cookbooks, especially with centos. These are
 ### See also
 
 [yandex-qatools/chef-selenium](https://github.com/yandex-qatools/chef-selenium)
+[NERC-CEH/puppet-selenium](https://github.com/NERC-CEH/puppet-selenium)
 
 ### Author
 [Serguei Kouzmine](kouzmine_serguei@yahoo.com)
