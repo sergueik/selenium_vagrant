@@ -11,6 +11,7 @@ end
 # Define variables for attributes
 use_default_version = false
 account_username = node['purge']['account_username']
+basedir = node['purge']['basedir']
 critical_percent = node['purge']['critical_percent'].to_i
 mount = node['purge']['mount']
 account_home = "/home/#{account_username}"
@@ -29,6 +30,7 @@ template ("#{account_home}/scripts/#{purge_script}") do
   variables(
     :critical_percent => critical_percent,
     :mount            => mount,
+    :basedir          => basedir,
     :ipaddress        => node['ipaddress'],
     )
   owner account_username

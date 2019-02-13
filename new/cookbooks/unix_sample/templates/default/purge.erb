@@ -2,9 +2,9 @@
 
 # This is bare bones script to purge Jenkins build maven repo
 echo "running on <%= @ipaddress -%>"
-BASE_DIR='<%= @base_dir -%>'
-if [ -z "${BASE_DIR}" ] ; then
-  BASE_DIR='/home/vagrant'
+BASEDIR='<%= @basedir -%>'
+if [ -z "${BASEDIR}" ] ; then
+  BASEDIR='/home/vagrant'
 fi
 echo "Critical percent: <%= @critical_percent -%>"
 echo "Mount: <%= @mount -%>"
@@ -16,13 +16,10 @@ df -h | awk '{MOUNT=$6; PERCENT=$5; if (MOUNT ~ /^\/<%= @mount -%>$/) { print "M
 if [ $? = 1 ]
 then
   echo 'Will purge'
-else
-  echo 'No need to purge'
-fi
-
-# origin: https://stackoverflow.com/questions/7408545/how-do-you-clear-apache-mavens-cache
-# NOTE: does not work
-cat <<EOF>'pom.xml'
+  if [ $USE_MAVEN ] ; then
+    # origin: https://stackoverflow.com/questions/7408545/how-do-you-clear-apache-mavens-cache
+    # NOTE: does not work
+    cat <<EOF>'pom.xml'
 <?xml version="1.0"?>
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
   <modelVersion>4.0.0</modelVersion>
@@ -42,9 +39,16 @@ cat <<EOF>'pom.xml'
   </developers>
 </project>
 EOF
-mvn dependency:purge-local-repository -DactTransitively=false -DreResolve=false
-echo "Brute force cleanup \"${BASE_DIR}/.m2/repository\"" 
-1 > /dev/null 2> /dev/null pushd $BASE_DIR
-find ./.m2/repository -type d -and -maxdepth 1 -prune -exec rm -fr {} \;
-du -s ./.m2/
-1 > /dev/null 2> /dev/null popd 
+    mvn dependency:purge-local-repository -DactTransitively=false -DreResolve=false
+  fi
+  
+  echo "Brute force cleanup of \"${BASEDIR}/.m2/repository\"" 
+  1 > /dev/null 2> /dev/null pushd $BASEDIR
+  pwd
+  find .m2/repository -maxdepth 1 -and -type d -prune -exec rm -fr {} \;
+  echo "After cleanup of \"${BASEDIR}/.m2/repository\"" 
+  du -s .m2/
+  1 > /dev/null 2> /dev/null popd 
+else
+  echo 'No need to purge'
+fi
