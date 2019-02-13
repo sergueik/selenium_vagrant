@@ -1,24 +1,21 @@
 log "Installing custom purge scripts version #{node['purge']['track']}" do
   level :info
 end
+
 # TODO: install java and maven to use maven command to purge stuff
+# can also  brute force delete .m2/repositories, of course
 # https://stackoverflow.com/questions/7408545/how-do-you-clear-apache-mavens-cache
-# include_recipe 'java'
+# include_recipe 'jenkins::java'
+# include_recipe 'jenkins::master'
 
 # Define variables for attributes
 use_default_version = false
 account_username = node['purge']['account_username']
 critical_percent = node['purge']['critical_percent'].to_i
-critical_percent = 72 
 mount = node['purge']['mount']
 account_home = "/home/#{account_username}"
 purge_script = 'purge.sh'
 
-package 'Install unzip' do
-  package_name 'unzip'
-  action :install
-  ignore_failure false
-end
 directory "#{account_home}/scripts" do
   owner account_username
   group account_username
@@ -43,7 +40,7 @@ end
 bash 'run purge script' do
     code <<-EOF
 pushd "#{account_home}/scripts"
-# assume it would like to run from a specific directory
+# assume it may need to be run from a specific directory
 ./#{purge_script}
     EOF
     ignore_failure true
