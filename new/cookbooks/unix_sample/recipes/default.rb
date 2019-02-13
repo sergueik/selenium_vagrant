@@ -1,4 +1,4 @@
-log "Installing custom purge scripts version #{node['chrome']['track']}" do
+log "Installing custom purge scripts version #{node['purge']['track']}" do
   level :info
 end
 # TODO: install java and maven to use maven command to purge stuff
@@ -7,8 +7,10 @@ end
 
 # Define variables for attributes
 use_default_version = false
-account_username = node['vnc']['account_username']
-critical_size = node['vnc']['critical_size'].to_i
+account_username = node['purge']['account_username']
+critical_percent = node['purge']['critical_percent'].to_i
+critical_percent = 72 
+mount = node['purge']['mount']
 account_home = "/home/#{account_username}"
 purge_script = 'purge.sh'
 
@@ -24,24 +26,27 @@ directory "#{account_home}/scripts" do
   recursive true
   action :create
 end
-# Create purge launcher script for debugging Selenium Node issues
+# Create purge script
 template ("#{account_home}/scripts/#{purge_script}") do
   source 'purge.erb'
   variables(
-    :critical_size => critical_size,
-    # :hub_ip => node['selenium_node']['hub_ip'],
+    :critical_percent => critical_percent,
+    :mount            => mount,
+    :ipaddress        => node['ipaddress'],
     )
   owner account_username
   group account_username
+  notifies :run, 'bash[run purge script]', :delayed
   mode 00755
 end
 
-bash 'run cleanup scripts' do
-    code <<-EOH
+bash 'run purge script' do
+    code <<-EOF
 pushd "#{account_home}/scripts"
 # assume it would like to run from a specific directory
 ./#{purge_script}
-    EOH
+    EOF
+    ignore_failure true
     only_if { ::File.exists?("#{account_home}/scripts/#{purge_script}") }
 end
 

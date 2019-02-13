@@ -1,4 +1,15 @@
 #!/bin/bash
 
 # This is bare bones script to purge jenkins build maven repo
-export CRITICAL_SIZE=<%= @critical_size %>
+echo "running on <%= @ipaddress -%>"
+echo "Critical percent: <%= @critical_percent -%>"
+echo "Mount: <%= @mount -%>"
+echo 'Running df evaluation'
+df -h | awk '{MOUNT=$6; PERCENT=$5; if (MOUNT ~ /^\/i<%= @mount -%>$/) {PERCENT_VAL = gensub(/%$/, "", "g", PERCENT) ;  if (PERCENT_VAL >= <%= @critical_percent -%> ) { print "|" MOUNT  "|" PERCENT_VAL; exit 1 }} exit 0}'
+if [ $? ]
+then
+  echo 'Will purge'
+else
+  echo 'No need to purge'
+fi
+

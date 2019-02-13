@@ -4,6 +4,14 @@ test-output/
 .classpath
 .settings/
 .vagrant/
+new/cookbooks/runit
+new/cookbooks/packagecloud
+new/cookbooks/jenkins
+new/cookbooks/dpkg_autostart
+new/cookbooks/yum-epel
+new/cookbooks/powershell
+new/cookbooks/windows
+new/cookbooks/java
 cookbooks/7-zip
 cookbooks/apt
 cookbooks/ark

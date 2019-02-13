@@ -24,7 +24,7 @@ end
 VAGRANTFILE_API_VERSION = '2'
 
 Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
-  
+
 
   # Localy cached images
   case box_name
@@ -37,6 +37,8 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
       config_vm_default = 'linux'
       config_vm_box_url = "file://#{basedir}/Downloads/trusty-server-cloudimg-amd64-vagrant-disk1.box"
    else
+     # cached boxes from https://developer.microsoft.com/en-us/microsoft-edge/tools/vms/
+     # see also https://app.vagrantup.com/designerror/boxes/windows-7
      config_vm_default = 'windows'
      config_vm_newbox  = false
      if box_name =~ /xp/
@@ -102,12 +104,13 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
     puts "Provision software for '#{config.vm.box}'"
     case config_vm_box
       when /ubuntu|debian/
-        # Use chef provisioner with ubuntu
+        # Use Chef provisioner with Ubuntu
+	# https://www.vagrantup.com/docs/provisioning/chef_solo.html
         config.vm.provision :chef_solo do |chef|
           chef.version = '14.10.9'
           chef.data_bags_path = 'data_bags'
 	  # will require downloading locally
-	  #  java, homebrew, windows, chef_handler
+	  #  java, homebrew, windows, powershell, chef_handler
 	  # cat cookbooks/windows/metadata.json | /c/tools/jq-win64.exe  '.dependencies'
           # {
           #   "chef_handler": ">= 0.0.0"
@@ -119,7 +122,7 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
           chef.log_level = 'info'
         end
       else # windows
-	   # TODO: resurrect chef provision bootstrap    
+	   # TODO: resurrect chef provision bootstrap
         if config_vm_newbox
           config.vm.provision :shell, inline: <<-END_SCRIPT1
   set-executionpolicy Unrestricted

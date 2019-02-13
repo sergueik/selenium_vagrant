@@ -10,3 +10,4 @@ supports         'ubuntu', '>= 12.04'
 supports         'centos'
 # TODO: to use maven itself to purge
 # depends	         'java' ,'>= 1.31'
+depends	         'jenkins' ,'>= 6.2.0'
