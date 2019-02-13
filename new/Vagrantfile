@@ -108,16 +108,9 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
 	# https://www.vagrantup.com/docs/provisioning/chef_solo.html
         config.vm.provision :chef_solo do |chef|
           chef.version = '14.10.9'
-          chef.data_bags_path = 'data_bags'
-	  # will require downloading locally
-	  #  java, homebrew, windows, powershell, chef_handler
-	  # cat cookbooks/windows/metadata.json | /c/tools/jq-win64.exe  '.dependencies'
-          # {
-          #   "chef_handler": ">= 0.0.0"
-          # }
-          # ERROR: undefined method `property' for Chef::Resource::HomebrewCask:Class
-
-          # chef.add_recipe 'wrapper_java'
+          # chef.data_bags_path = 'data_bags'
+	  # will require downloading locally - 
+	  # all stock cookbooks need to be kept in.gitignore
           chef.add_recipe 'unix_sample'
           chef.log_level = 'info'
         end
