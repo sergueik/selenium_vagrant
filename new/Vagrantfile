@@ -52,7 +52,7 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
        config_vm_box_url = "file://#{basedir}/Downloads/windows_2012_r2_standard.box"
      else
       config_vm_box     = 'windows7'
-      config_vm_box_url = "file://#{basedir}/Downloads/vagrant-win7-ie10-updated.box"
+      config_vm_box_url = "file://#{basedir}/Downloads/vagrant-win7-ie11.box"
      end
   end
 

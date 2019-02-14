@@ -16,39 +16,70 @@ critical_percent = node['purge']['critical_percent'].to_i
 mount = node['purge']['mount']
 account_home = "/home/#{account_username}"
 purge_script = 'purge.sh'
+debug = false
 
-directory "#{account_home}/scripts" do
-  owner account_username
-  group account_username
-  mode  00755
-  recursive true
-  action :create
+begin
+  if node.attribute?('filesystem')
+    log "Attribute filesysem is available" do
+      level :info
+    end
+    fs = node['filesystem']
+    percent_used = fs['by_device']['/dev/sda1']['percent_used'].to_i
+    scratch_obj = fs.to_s
+  else
+    log "Attribute filesysem is not available" do
+      level :info
+    end
+  end
+  if debug
+    log "Filesystem object dump: #{scratch_obj}" do
+      level :info
+    end
+  end
+  log "Disk percent_used: #{percent_used}" do
+    level :info
+  end
+rescue => e
+  percent_used = 0
+  log "failed to read filesystem object #{e.to_s}" do
+    level :info
+  end
 end
-# Create purge script
-template ("#{account_home}/scripts/#{purge_script}") do
-  source 'purge.erb'
-  variables(
-    :critical_percent => critical_percent,
-    :mount            => mount,
-    :basedir          => basedir,
-    :ipaddress        => node['ipaddress'],
-    )
-  owner account_username
-  group account_username
-  notifies :run, 'bash[run purge script]', :delayed
-  mode 00755
-end
+# need to utilize ohai attribute node['/dev/xvda1']['kb_size'] instead of
+# calling df directly in the shell script
+if percent_used > critical_percent
+  directory "#{account_home}/scripts" do
+    owner account_username
+    group account_username
+    mode  00755
+    recursive true
+    action :create
+  end
+  # Create purge script
+  template ("#{account_home}/scripts/#{purge_script}") do
+    source 'purge.erb'
+    variables(
+      :critical_percent => critical_percent,
+      :mount            => mount,
+      :basedir          => basedir,
+      :ipaddress        => node['ipaddress'],
+      )
+    owner account_username
+    group account_username
+    notifies :run, 'bash[run purge script]', :delayed
+    mode 00755
+  end
 
-bash 'run purge script' do
-    code <<-EOF
-pushd "#{account_home}/scripts"
-# assume it may need to be run from a specific directory
-./#{purge_script}
-    EOF
-    ignore_failure true
-    only_if { ::File.exists?("#{account_home}/scripts/#{purge_script}") }
+  bash 'run purge script' do
+      code <<-EOF
+  pushd "#{account_home}/scripts"
+  # assume it may need to be run from a specific directory
+  ./#{purge_script}
+      EOF
+      ignore_failure true
+      only_if { ::File.exists?("#{account_home}/scripts/#{purge_script}") }
+  end
 end
-
 log 'Finished configuring Node.' do
   level :info
 end
