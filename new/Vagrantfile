@@ -8,6 +8,8 @@ basedir = basedir.gsub('\\', '/')
 vagrant_use_proxy = ENV.fetch('VAGRANT_USE_PROXY', nil)
 http_proxy        = ENV.fetch('HTTP_PROXY', nil)
 box_name          = ENV.fetch('BOX_NAME', 'trusty64')
+# for Windows test export BOX_NAME='windows7'
+
 debug             = ENV.fetch('DEBUG', 'false')
 box_memory        = ENV.fetch('BOX_MEMORY', '1024')
 box_cpus          = ENV.fetch('BOX_CPUS', '2')
@@ -75,10 +77,15 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
       config.winrm.username       = 'vagrant'
       config.winrm.password       = 'vagrant'
       config.vm.guest             = :windows
-      config.windows.halt_timeout = 15
+      config.windows.halt_timeout = 120
       # Port forward WinRM and RDP
+      # https://www.vagrantup.com/docs/boxes/base.html
+      # https://codeblog.dotsandbrackets.com/vagrant-windows/
+      # does not seem to work from Windows host - pending validation from linux host
       config.vm.network :forwarded_port, guest: 3389, host: 3389, id: 'rdp', auto_correct: true
       config.vm.network :forwarded_port, guest: 5985, host: 5985, id: 'winrm', auto_correct:true
+      config.vm.network :forwarded_port, guest: 5986, host: 5986, auto_correct:true
+      config.vm.network :forwarded_port, guest: 389, host: 1389
       config.vm.host_name         = 'windows7'
       config.vm.boot_timeout      = 120
       # Ensure that all networks are set to 'private'
@@ -109,6 +116,7 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
 REPOSITORY='/home/vagrant/.m2/repository'
 mkdir -p $REPOSITORY
 # populate the maven repo mockup with real file to exercise the load
+# the workspace directory has a small repository to seed the VM
 sudo cp -R /vagrant/repository/ $REPOSITORY
 chown -R vagrant:vagrant $REPOSITORY
 du -s $REPOSITORY
@@ -126,10 +134,10 @@ EOF
       else # windows
 	   # TODO: resurrect chef provision bootstrap
         if config_vm_newbox
-          config.vm.provision :shell, inline: <<-END_SCRIPT1
+          config.vm.provision :shell, inline: <<-EOF
   set-executionpolicy Unrestricted
-  enable-emoting -Force
-          END_SCRIPT1
+  enable-remoting -force
+          EOF
           # install .Net 4
           config.vm.provision :shell, :path => 'install_net4.ps1'
           # install chocolatey
@@ -137,17 +145,14 @@ EOF
           # install puppet using chocolatey
           config.vm.provision :shell, :path => 'install_puppet.ps1'
         end
-        # Use puppet provisioner
-        config.vm.provision :puppet do |puppet|
-          puppet.binary_path    = 'C:/PROGRA~1/PUPPET~1/PUPPET/bin'
-          # puppet.binary_path    = 'C:/Program Files/Puppet Labs/Puppet/bin'
-          puppet.hiera_config_path = 'data/hiera.yaml'
-          puppet.module_path    = 'modules'
-          puppet.manifests_path = 'manifests'
-          puppet.manifest_file  = 'windows.pp'
-          puppet.options        = '--verbose'
-          # TODO: http://puppet-on-the-edge.blogspot.com/2014/03/heredoc-is-here.html
-          # puppet.options        = '--verbose --parser'
+        # Use chef provisioner
+        config.vm.provision :chef_solo do |chef|
+          chef.version = '14.10.9'
+          # chef.data_bags_path = 'data_bags'
+	  # will require downloading locally -
+	  # all stock cookbooks need to be kept in.gitignore
+          chef.add_recipe 'windows_sample'
+          chef.log_level = 'info'
         end
       end
     end
