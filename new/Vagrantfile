@@ -104,12 +104,21 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
     puts "Provision software for '#{config.vm.box}'"
     case config_vm_box
       when /ubuntu|debian/
+        config.vm.provision 'shell', inline: <<-EOF
+# create the maven repo mockup
+REPOSITORY='/home/vagrant/.m2/repository'
+mkdir -p $REPOSITORY
+# populate the maven repo mockup with real file to exercise the load
+sudo cp -R /vagrant/repository/ $REPOSITORY
+chown -R vagrant:vagrant $REPOSITORY
+du -s $REPOSITORY
+EOF
         # Use Chef provisioner with Ubuntu
 	# https://www.vagrantup.com/docs/provisioning/chef_solo.html
         config.vm.provision :chef_solo do |chef|
           chef.version = '14.10.9'
           # chef.data_bags_path = 'data_bags'
-	  # will require downloading locally - 
+	  # will require downloading locally -
 	  # all stock cookbooks need to be kept in.gitignore
           chef.add_recipe 'unix_sample'
           chef.log_level = 'info'

@@ -6,49 +6,31 @@ BASEDIR='<%= @basedir -%>'
 if [ -z "${BASEDIR}" ] ; then
   BASEDIR='/home/vagrant'
 fi
-echo "Critical percent: <%= @critical_percent -%>"
-echo "Mount: <%= @mount -%>"
-echo "Mount: vagrant"
-echo 'Evaluate df output'
-
-
-df -h | awk '{MOUNT=$6; PERCENT=$5; if (MOUNT ~ /^\/<%= @mount -%>$/) { print "Mounted on " MOUNT | "cat 1>&2"; PERCENT_VAL = gensub(/%$/, "", "g", PERCENT); if (PERCENT_VAL >= <%= @critical_percent -%> ) { print "The Use is " PERCENT_VAL "%"| "cat 1>&2"; print "The Use of " MOUNT " is " PERCENT_VAL "%"; exit 1 }}}'
-if [ $? = 1 ]
-then
-  echo 'Will purge'
-  if [ $USE_MAVEN ] ; then
-    # origin: https://stackoverflow.com/questions/7408545/how-do-you-clear-apache-mavens-cache
-    # NOTE: does not work
-    cat <<EOF>'pom.xml'
-<?xml version="1.0"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
-  <modelVersion>4.0.0</modelVersion>
-  <groupId>com.mycompany.app</groupId>
-  <artifactId>dummy</artifactId>
-  <packaging>jar</packaging>
-  <version>0.1-SNAPSHOT</version>
-  <name>app</name>
-  <url>http://maven.apache.org</url>
-  <developers>
-    <developer>
-      <name>Serguei Kouzmine</name>
-      <email>kouzmine_serguei@yahoo.com</email>
-      <organization/>
-      <organizationUrl>https://github.com/sergueik</organizationUrl>
-    </developer>
-  </developers>
-</project>
-EOF
-    mvn dependency:purge-local-repository -DactTransitively=false -DreResolve=false
+# NOTE: @high_percent and @mount only needed for the df processing. Otherwise used by the recipe only
+echo "High percent: <%= @high_percent -%>"
+echo "Mount dir: <%= @mount_dir -%>"
+DO_PURGE=true
+# when DO_PURGE set to false, examine df output to determine
+if ! $DO_PURGE ; then
+  echo 'Evaluate df output'
+  df -h | awk '{MOUNT=$6; PERCENT=$5; if (MOUNT ~ /^\/<%= @mount -%>$/) { print "Mounted on " MOUNT | "cat 1>&2"; PERCENT_VAL = gensub(/%$/, "", "g", PERCENT); if (PERCENT_VAL >= <%= @high_percent -%> ) { print "The Use is " PERCENT_VAL "%"| "cat 1>&2"; print "The Use of " MOUNT " is " PERCENT_VAL "%"; exit 1 }}}'
+  if [ $? = 1 ]
+  then
+    DO_PURGE=true
   fi
-  
-  echo "Brute force cleanup of \"${BASEDIR}/.m2/repository\"" 
-  1 > /dev/null 2> /dev/null pushd $BASEDIR
-  pwd
-  find .m2/repository -maxdepth 1 -and -type d -prune -exec rm -fr {} \;
-  echo "After cleanup of \"${BASEDIR}/.m2/repository\"" 
-  du -s .m2/
-  1 > /dev/null 2> /dev/null popd 
-else
-  echo 'No need to purge'
 fi
+if ! $DO_PURGE ; then
+  echo 'No need to purge'
+else
+  echo "Create empty \"${BASEDIR}/.m2/repository/dummy\""
+  mkdir -p "${BASEDIR}/.m2/repository/dummy"
+  pushd "${BASEDIR}/.m2"
+  echo "Before cleanup of \"$(pwd)\""
+  du -s .
+  echo "Cleanup of \"$(pwd)\""
+  find 'repository' -maxdepth 1 -and -type d -and \( -not -path 'repository' \) -prune -exec rm -fr {} \;
+  echo "After cleanup of \"$(pwd)\""
+  du -s .
+  1 > /dev/null 2> /dev/null popd
+fi
+exit 0
