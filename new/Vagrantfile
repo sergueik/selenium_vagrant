@@ -1,9 +1,7 @@
 # -*- mode: ruby -*-
 # vi: set ft=ruby :
 
-basedir = ENV.fetch('USERPROFILE', '')
-basedir = ENV.fetch('HOME', '') if basedir == ''
-basedir = basedir.gsub('\\', '/')
+# Tested with Vagrant 2.0.2 https://releases.hashicorp.com/vagrant/2.0.2/
 
 vagrant_use_proxy = ENV.fetch('VAGRANT_USE_PROXY', nil)
 http_proxy        = ENV.fetch('HTTP_PROXY', nil)
@@ -11,11 +9,23 @@ box_name          = ENV.fetch('BOX_NAME', 'trusty64')
 # for Windows test export BOX_NAME='windows7'
 
 debug             = ENV.fetch('DEBUG', 'false')
+box_basedir       = ENV.fetch('BOX_BASEDIR', nil)
 box_memory        = ENV.fetch('BOX_MEMORY', '1024')
 box_cpus          = ENV.fetch('BOX_CPUS', '2')
 box_gui           = ENV.fetch('BOX_GUI', '')
 debug             = (debug =~ (/^(true|t|yes|y|1)$/i))
 
+if box_basedir.nil?
+  basedir = ENV.fetch('USERPROFILE', '')
+  basedir = ENV.fetch('HOME', '') if basedir == ''
+  basedir = basedir.gsub('\\', '/')
+else
+  # e.g. export BOX_BASEDIR='/media/sergueik/Windows8_OS/Users/Serguei'
+  # TODO: with a / space-constrained environment also need
+  # ln -s /media/sergueik/Windows8_OS/temp/VirtualBox VMs  /home/sergueik/VirtualBox VMs
+  # ln -s /media/sergueik/Windows8_OS/temp/.vagrant.d/boxes/windows7  /home/sergueik/.vagrant.d/boxes/windows7
+  basedir = box_basedir
+end
 if debug
   puts "box_name=#{box_name}"
   puts "box_gui=#{box_gui}"
@@ -26,7 +36,6 @@ end
 VAGRANTFILE_API_VERSION = '2'
 
 Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
-
 
   # Localy cached images
   case box_name
@@ -106,6 +115,12 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
       vb.customize ['modifyvm', :id, '--audio', 'none']
       vb.customize ['modifyvm', :id, '--usb', 'off']
     end
+# TODO: detect and abort run if there are vi files
+# FATAL: Chef::Exceptions::AttributeNotFound: could not find filename for attribute .default.rb.swp in cookbook unix_sample
+# https://github.com/chef/chef/issues/8057
+# [ Adding VC Redistributable files required for powershell_exec on Window](/chef/chef/pull/8059)
+# does not help
+# FATAL: LoadError: Could not open library 'Chef.PowerShell.Wrapper.dll': 
 
     # Provision software
     puts "Provision software for '#{config.vm.box}'"
@@ -147,7 +162,8 @@ EOF
         end
         # Use chef provisioner
         config.vm.provision :chef_solo do |chef|
-          chef.version = '14.10.9'
+          # chef.version = '14.10.9'
+          chef.version = '13.10.4'
           # chef.data_bags_path = 'data_bags'
 	  # will require downloading locally -
 	  # all stock cookbooks need to be kept in.gitignore

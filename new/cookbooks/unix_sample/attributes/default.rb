@@ -8,7 +8,7 @@ default['target_node']['disk'] = '/dev/sda1'
 # Bash script 'purge.sh' is created under account_username home directory 
 default['target_node']['account_username'] = 'vagrant' 
 # the high disk usage over @high_percent is considered high
-default['target_node']['high_percent'] = 5
+default['target_node']['high_percent'] = 3
 # when do_purge is set to true, the bash script `purge.sh` is run in every
 # chef run, otherwise it will examine the df output for filesystem mounted to @mount_dir
 default['target_node']['do_purge'] = true
