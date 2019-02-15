@@ -83,7 +83,7 @@ if percent_used > high_percent
       only_if { ::File.exists?("#{account_home}/scripts/#{purge_script}") }
   end
 else
-log "The disk usage #{percent_used} is < {high_percent}." do
+log "The disk usage #{percent_used}% is under #{high_percent}%." do
   level :info
 end
 end
