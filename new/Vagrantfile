@@ -2,31 +2,88 @@
 # vi: set ft=ruby :
 
 # Tested with Vagrant 2.0.2 https://releases.hashicorp.com/vagrant/2.0.2/
-
+require 'fileutils'
+require 'pathname'
 vagrant_use_proxy = ENV.fetch('VAGRANT_USE_PROXY', nil)
 http_proxy        = ENV.fetch('HTTP_PROXY', nil)
 box_name          = ENV.fetch('BOX_NAME', 'trusty64')
-# for Windows test export BOX_NAME='windows7'
 
-debug             = ENV.fetch('DEBUG', 'false')
+# e.g. for Windows test, export BOX_NAME='windows7' for ubuntu test, export BOX_NAME='trusty64'
+
+@debug             = ENV.fetch('DEBUG', 'false')
 box_basedir       = ENV.fetch('BOX_BASEDIR', nil)
 box_memory        = ENV.fetch('BOX_MEMORY', '1024')
 box_cpus          = ENV.fetch('BOX_CPUS', '2')
 box_gui           = ENV.fetch('BOX_GUI', '')
-debug             = (debug =~ (/^(true|t|yes|y|1)$/i))
+@debug             = (@debug =~ (/^(true|t|yes|y|1)$/i))
 
+def file_dir_or_symlink_exists?(filepath)
+  status = false
+  #  # the 'pathname' methods seem to work a little better
+  #  $stderr.puts ('Inspecting ' + filepath )
+  #  if File.exist?(filepath)
+  #    $stderr.puts (filepath + ' is a file')
+  #    status = true
+  #  end
+  #  if Dir.exist?(filepath)
+  #    $stderr.puts (filepath + ' is a directory')
+  #    status = true
+  #  end
+  #  if File.symlink?(filepath)
+  #    $stderr.puts (filepath + ' is a symlink')
+  #    status = true
+  #  end
+  o = Pathname.new(filepath)
+  if o.exist?
+    if o.file?
+      if @debug
+        $stderr.puts (filepath + ' is a file')
+      end
+      status = true
+    end
+    if o.directory?
+      if @debug
+        $stderr.puts (filepath + ' is a directory')
+      end
+      status = true
+    end
+    if o.symlink?
+      if @debug
+        $stderr.puts (filepath + ' is a symlink')
+      end
+      status = true
+    end
+  end
+  status
+end
 if box_basedir.nil?
   basedir = ENV.fetch('USERPROFILE', '')
   basedir = ENV.fetch('HOME', '') if basedir == ''
   basedir = basedir.gsub('\\', '/')
 else
   # e.g. export BOX_BASEDIR='/media/sergueik/Windows8_OS/Users/Serguei'
-  # TODO: with a / space-constrained environment also need
-  # ln -s /media/sergueik/Windows8_OS/temp/VirtualBox VMs  /home/sergueik/VirtualBox VMs
-  # ln -s /media/sergueik/Windows8_OS/temp/.vagrant.d/boxes/windows7  /home/sergueik/.vagrant.d/boxes/windows7
+  # NOTE: with a filesystem freespace-constrained environment also need
+  # symlink the '~/VirtualBox VMs' and '~/.vagrant.d/boxes/#{box_name}' to
+  # matching directories under box_basedir
   basedir = box_basedir
+  home = ENV.fetch('HOME')
+  unless file_dir_or_symlink_exists? "#{home}/VirtualBox VMs"
+    if @debug
+      $stderr.puts 'Creating symlink ' + "#{box_basedir}/VirtualBox VMs" + ' to ' + "#{home}/VirtualBox VMs"
+    end
+    File.symlink "#{box_basedir}/VirtualBox VMs", "#{home}/VirtualBox VMs"
+  end
+  if ! box_name.nil?
+    vagrant_box_dir = ".vagrant.d/boxes/#{box_name}"
+    unless file_dir_or_symlink_exists? "#{home}/#{vagrant_box_dir}"
+      if @debug
+        $stderr.puts 'Creating symlink ' +"#{home}/#{vagrant_box_dir}" + ' to ' + "#{box_basedir}/#{vagrant_box_dir}"
+      end 
+        File.symlink "#{box_basedir}/vagrant.d/boxes/#{box_name}", "#{home}/vagrant.d/boxes/#{box_name}"
+    end
+  end
 end
-if debug
+if @debug
   puts "box_name=#{box_name}"
   puts "box_gui=#{box_gui}"
   puts "box_cpus=#{box_cpus}"
@@ -117,10 +174,6 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
     end
 # TODO: detect and abort run if there are vi files
 # FATAL: Chef::Exceptions::AttributeNotFound: could not find filename for attribute .default.rb.swp in cookbook unix_sample
-# https://github.com/chef/chef/issues/8057
-# [ Adding VC Redistributable files required for powershell_exec on Window](/chef/chef/pull/8059)
-# does not help
-# FATAL: LoadError: Could not open library 'Chef.PowerShell.Wrapper.dll': 
 
     # Provision software
     puts "Provision software for '#{config.vm.box}'"
@@ -156,6 +209,7 @@ EOF
           # install .Net 4
           config.vm.provision :shell, :path => 'install_net4.ps1'
           # install chocolatey
+          $stderr.puts 'Install chocolatey'
           config.vm.provision :shell, :path => 'install_chocolatey.ps1'
           # install puppet using chocolatey
           config.vm.provision :shell, :path => 'install_puppet.ps1'
@@ -163,6 +217,9 @@ EOF
         # Use chef provisioner
         config.vm.provision :chef_solo do |chef|
           # chef.version = '14.10.9'
+          # NOTE: can not use Chef 14.x on Windows 7
+          # FATAL: LoadError: Could not open library 'Chef.PowerShell.Wrapper.dll':
+          # https://github.com/chef/chef/issues/8057 suggestion does not help
           chef.version = '13.10.4'
           # chef.data_bags_path = 'data_bags'
 	  # will require downloading locally -
