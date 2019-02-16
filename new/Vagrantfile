@@ -4,18 +4,20 @@
 # Tested with Vagrant 2.0.2 https://releases.hashicorp.com/vagrant/2.0.2/
 require 'fileutils'
 require 'pathname'
+
 vagrant_use_proxy = ENV.fetch('VAGRANT_USE_PROXY', nil)
 http_proxy        = ENV.fetch('HTTP_PROXY', nil)
 box_name          = ENV.fetch('BOX_NAME', 'trusty64')
 
 # e.g. for Windows test, export BOX_NAME='windows7' for ubuntu test, export BOX_NAME='trusty64'
 
-@debug             = ENV.fetch('DEBUG', 'false')
-box_basedir       = ENV.fetch('BOX_BASEDIR', nil)
-box_memory        = ENV.fetch('BOX_MEMORY', '1024')
-box_cpus          = ENV.fetch('BOX_CPUS', '2')
-box_gui           = ENV.fetch('BOX_GUI', '')
-@debug             = (@debug =~ (/^(true|t|yes|y|1)$/i))
+@debug      = ENV.fetch('DEBUG', 'false')
+box_basedir = ENV.fetch('BOX_BASEDIR', nil)
+box_memory  = ENV.fetch('BOX_MEMORY', '1024')
+box_cpus    = ENV.fetch('BOX_CPUS', '2')
+box_gui     = ENV.fetch('BOX_GUI', '')
+bootstrap   = ENV.fetch('BOOTSTRAP', 'false')
+@debug      = (@debug =~ (/^(true|t|yes|y|1)$/i))
 
 def file_dir_or_symlink_exists?(filepath)
   status = false
@@ -108,7 +110,7 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
      # cached boxes from https://developer.microsoft.com/en-us/microsoft-edge/tools/vms/
      # see also https://app.vagrantup.com/designerror/boxes/windows-7
      config_vm_default = 'windows'
-     config_vm_newbox  = false
+     config_vm_bootstrap = bootstrap
      if box_name =~ /xp/
        config_vm_box     = 'windows_xp'
        config_vm_box_url = "file://#{basedir}/Downloads/IE8.XP.For.Vagrant.box"
@@ -200,19 +202,24 @@ EOF
           chef.log_level = 'info'
         end
       else # windows
-	   # TODO: resurrect chef provision bootstrap
-        if config_vm_newbox
+        if config_vm_bootstrap
           config.vm.provision :shell, inline: <<-EOF
-  set-executionpolicy Unrestricted
-  enable-remoting -force
+            set-executionpolicy Unrestricted
+            # TODO: Windows PowerShell updated your execution policy  successfully, but the setting is overridden by a policy defined at a more  specific scope.  Due to the override, your shell will retain its current effective execution policy of Bypass. Type "Get-ExecutionPolicy -List" to view 
+
+            enable-memoting -force
+            # TODO: enable-remoting' is not recognized as the name of windows: a cmdlet, function, script file, or operable program
           EOF
-          # install .Net 4
-          config.vm.provision :shell, :path => 'install_net4.ps1'
-          # install chocolatey
-          $stderr.puts 'Install chocolatey'
-          config.vm.provision :shell, :path => 'install_chocolatey.ps1'
+          if File.exist?('install_net4.ps1')
+            $stderr.puts '(Re)install .Net 4'
+            config.vm.provision :shell, :path => 'install_net4.ps1'
+          end
+          if File.exist?('install_chocolatey.ps1')
+            $stderr.puts 'Install chocolatey'
+            config.vm.provision :shell, :path => 'install_chocolatey.ps1'
+          end
           # install puppet using chocolatey
-          config.vm.provision :shell, :path => 'install_puppet.ps1'
+          # config.vm.provision :shell, :path => 'install_chef.ps1'
         end
         # Use chef provisioner
         config.vm.provision :chef_solo do |chef|
@@ -223,7 +230,7 @@ EOF
           chef.version = '13.10.4'
           # chef.data_bags_path = 'data_bags'
 	  # will require downloading locally -
-	  # all stock cookbooks need to be kept in.gitignore
+	  # all chef marketcookbook dependencies need to be kept in.gitignore
           chef.add_recipe 'windows_sample'
           chef.log_level = 'info'
         end
