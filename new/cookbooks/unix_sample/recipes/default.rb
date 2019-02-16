@@ -1,6 +1,13 @@
 log "Installing custom purge scripts version #{node['target_node']['script_version']}" do
   level :info
 end
+include_recipe 'jenkins::master'
+
+# default['java']['jdk_version'] = '7'
+node.default['jenkins']['master']['version'] = '2.51'
+# default['java']['install_flavor'] = 'openjdk'
+
+# include_recipe 'java'
 
 account_username = node['target_node']['account_username']
 basedir = node['target_node']['basedir']
@@ -27,9 +34,9 @@ begin
     log "Attribute filesysem is available" do
       level :info
     end
-    fs = node['filesystem']
+    fs           = node['filesystem']
     percent_used = fs['by_device'][disk]['percent_used'].to_i
-    scratch_obj = fs.to_s
+    scratch_obj  = fs.to_s
   else
     log "Attribute filesysem is not available" do
       level :info
@@ -51,15 +58,15 @@ rescue => e
 end
 if percent_used > high_percent
   directory "#{account_home}/scripts" do
-    owner account_username
-    group account_username
-    mode  00755
+    owner     account_username
+    group     account_username
+    mode      00755
     recursive true
-    action :create
+    action    :create
   end
   # Create purge script
   template ("#{account_home}/scripts/#{purge_script}") do
-    source 'purge.erb'
+    source   'purge.erb'
     variables(
       :high_percent => high_percent,
       :mount_dir    => mount_dir,
@@ -67,25 +74,36 @@ if percent_used > high_percent
       :basedir      => basedir,
       :ipaddress    => node['ipaddress'],
       )
-    owner account_username
-    group account_username
+    owner    account_username
+    group    account_username
     notifies :run, 'bash[run purge script]', :delayed
-    mode 00755
+    mode     00755
   end
 
   bash 'run purge script' do
-      code <<-EOF
+    code <<-EOF
   pushd "#{account_home}/scripts"
   # assume it may need to be run from a specific directory
   ./#{purge_script}
-      EOF
-      ignore_failure true
-      only_if { ::File.exists?("#{account_home}/scripts/#{purge_script}") }
+    EOF
+    ignore_failure true
+    only_if { ::File.exists?("#{account_home}/scripts/#{purge_script}") }
   end
+  # CAN duplicate?
+  service 'stop jenkins' do
+    action       :stop
+    service_name 'jenkins'
+    subscribes   :stop, 'bash[run purge script]', :before
+  end	  
+  service 'start jenkins' do
+    action       :start
+    service_name 'jenkins'
+    subscribes   :start, 'bash[run purge script]', :delayed
+  end	  
 else
-log "The disk usage #{percent_used}% is under #{high_percent}%." do
-  level :info
-end
+  log "The disk usage #{percent_used}% is below threshold of #{high_percent}%." do
+    level :info
+  end
 end
 log 'Finished configuring Node.' do
   level :info

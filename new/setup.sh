@@ -1,19 +1,21 @@
 #!/bin/bash
 
-OS='windows'
-if [ ! -z $TERM ]
+# NOTE: the OS env. var is already taken
+OPERATING_SYSTEM='windows'
+if [[ "$OS" != 'Windows_NT' ]]
 then
-  OS='linux'
+  OPERATING_SYSTEM='linux'
 fi
-if [ "${OS}" = 'linux'  ] ; then
+  echo "Running under ${OPERATING_SYSTEM}"
+if [ "${OPERATING_SYSTEM}" = 'linux'  ] ; then
   JQ='jq'
 else
   JQ='/c/tools/jq-win64.exe'
 fi
 # ubuntu  test only
-COOKBOOKS='jenkins runit dpkg_autostart packagecloud yum-epel'
+COOKBOOKS='jenkins runit dpkg_autostart packagecloud yum-epeli java homebrew'
 # ubuntu and windows tests
-COOKBOOKS='jenkins runit dpkg_autostart windows ms_dotnet powershell packagecloud yum-epel'
+COOKBOOKS='jenkins runit dpkg_autostart windows ms_dotnet powershell packagecloud yum-epel java homebrew'
 which $JQ > /dev/null
 if [ ! $? ] ; then
   sudo apt-get -qqy install jq curl

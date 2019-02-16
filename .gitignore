@@ -5,6 +5,7 @@ test-output/
 .settings/
 .vagrant/
 new/cookbooks/dpkg_autostart
+new/cookbooks/homebrew
 new/cookbooks/java
 new/cookbooks/jenkins
 new/cookbooks/ms_dotnet

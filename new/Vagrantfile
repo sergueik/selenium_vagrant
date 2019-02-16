@@ -80,7 +80,7 @@ else
     unless file_dir_or_symlink_exists? "#{home}/#{vagrant_box_dir}"
       if @debug
         $stderr.puts 'Creating symlink ' +"#{home}/#{vagrant_box_dir}" + ' to ' + "#{box_basedir}/#{vagrant_box_dir}"
-      end 
+      end
         File.symlink "#{box_basedir}/vagrant.d/boxes/#{box_name}", "#{home}/vagrant.d/boxes/#{box_name}"
     end
   end
@@ -138,6 +138,10 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
     else
       # clear HTTP_PROXY to prevent
       # WinRM::WinRMHTTPTransportError: Bad HTTP response returned from server (503)
+      # also often seen between windows hosts and windows guests, not solved
+      # User: vagrant
+      # Endpoint: http://127.0.0.1:5985/wsman
+      # Message: WinRM::WinRMAuthorizationError
       # https://github.com/chef/knife-windows/issues/143
       ENV.delete('HTTP_PROXY')
       # NOTE: WPA dialog blocks chef solo and makes Vagrant fail on modern.ie box
@@ -190,6 +194,18 @@ mkdir -p $REPOSITORY
 sudo cp -R /vagrant/repository/ $REPOSITORY
 chown -R vagrant:vagrant $REPOSITORY
 du -s $REPOSITORY
+
+  # install java directly
+  # NOTE: trusty repos do not have java 1.8
+  apt-get -qqy update
+  apt-get install -qqy openjdk-7-jdk
+  update-alternatives --set java /usr/lib/jvm/java-7-openjdk-amd64/jre/bin/java
+  # starting from 2.54 Jenkins requires java 1.8
+  # TODO: enforce legacy  Jenkins in recipe
+  add-apt-repository -y ppa:openjdk-r/ppa
+  apt-get -qqy update
+  apt-get install -qqy openjdk-8-jdk
+  update-alternatives --set java /usr/lib/jvm/java-8-openjdk-amd64/jre/bin/java
 EOF
         # Use Chef provisioner with Ubuntu
 	# https://www.vagrantup.com/docs/provisioning/chef_solo.html
@@ -205,7 +221,7 @@ EOF
         if config_vm_bootstrap
           config.vm.provision :shell, inline: <<-EOF
             set-executionpolicy Unrestricted
-            # TODO: Windows PowerShell updated your execution policy  successfully, but the setting is overridden by a policy defined at a more  specific scope.  Due to the override, your shell will retain its current effective execution policy of Bypass. Type "Get-ExecutionPolicy -List" to view 
+            # TODO: Windows PowerShell updated your execution policy  successfully, but the setting is overridden by a policy defined at a more  specific scope.  Due to the override, your shell will retain its current effective execution policy of Bypass. Type "Get-ExecutionPolicy -List" to view
 
             enable-memoting -force
             # TODO: enable-remoting' is not recognized as the name of windows: a cmdlet, function, script file, or operable program
@@ -233,7 +249,7 @@ EOF
           chef.version = '13.10.4'
           # chef.data_bags_path = 'data_bags'
 	  # will require downloading locally -
-	  # all chef marketcookbook dependencies need to be kept in.gitignore
+	  # all chef market cookbook dependencies need to be kept in.gitignore
           chef.add_recipe 'windows_sample'
           chef.log_level = 'info'
         end

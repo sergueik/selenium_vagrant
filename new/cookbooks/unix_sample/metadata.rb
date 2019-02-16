@@ -9,5 +9,9 @@ version          '0.0.1'
 supports         'ubuntu', '>= 12.04'
 supports         'centos'
 # TODO: to use maven itself to purge
-# depends	         'java' ,'>= 1.31'
+# NOTE: cookbook dependency
+# exception triggered by homebrew cookbook (?), and windows cookbook
+#  FATAL: LoadError: cannot load such file -- chef/mixin/language
+ 
+# depends	         'java' ,'~> 3.2.0'
 depends	         'jenkins' ,'>= 6.2.0'
