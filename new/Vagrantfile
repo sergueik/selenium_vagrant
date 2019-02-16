@@ -218,8 +218,11 @@ EOF
             $stderr.puts 'Install chocolatey'
             config.vm.provision :shell, :path => 'install_chocolatey.ps1'
           end
-          # install puppet using chocolatey
-          # config.vm.provision :shell, :path => 'install_chef.ps1'
+          if File.exist?('install_chef.ps1')
+            $stderr.puts  'install puppet and chef using chocolatey'
+            config.vm.provision :shell, :path => 'install_chef.ps1', :args => ['-package_name', 'chefdk', '-package_version', '3.5.13']
+            # NOTE: Exit code was '1603'. Exit code indicates the following: Generic MSI Error. This is a local environment error, not an issue with a package or the MSI itself - it could mean a pending reboot is necessary prior to install or something else (like the same version is already installed). Please see MSI log if available. If not, try again adding '--install-arguments="'/l*v
+          end
         end
         # Use chef provisioner
         config.vm.provision :chef_solo do |chef|
