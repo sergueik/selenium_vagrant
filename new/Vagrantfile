@@ -103,18 +103,25 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
 
     when /trusty32/
       config_vm_box     = 'ubuntu'
-      config_vm_box_url = "file://#{basedir}/Downloads/trusty-server-cloudimg-i386-vagrant-disk1.box"
-    when /trusty64/
-      config_vm_box     = 'ubuntu'
-      config_vm_default = 'linux'
-      box_filepath = "#{basedir}/Downloads/trusty-server-cloudimg-amd64-vagrant-disk1.box"
+      box_filepath      = "#{basedir}/Downloads/trusty-server-cloudimg-i386-vagrant-disk1.box"
+      config_vm_box_url = "file://#{box_filepath}"
+      box_base_url      = 'https://cloud-images.ubuntu.com/vagrant/trusty/current'
+      box_download_url  = "#{box_base_url}/trusty-server-cloudimg-i386-vagrant-disk1.box"
       if box_download
-        box_download_url = 'https://cloud-images.ubuntu.com/vagrant/trusty/current/trusty-server-cloudimg-amd64-vagrant-disk1.box'
 	$stderr.puts "Downloading #{box_download_url} to #{box_filepath}"
         %x|curl -k -L #{box_download_url} -o #{box_filepath}|
       end
-      # config_vm_box_url = "file://#{basedir}/Downloads/trusty-server-cloudimg-amd64-vagrant-disk1.box"
+    when /trusty64/
+      config_vm_box     = 'ubuntu'
+      config_vm_default = 'linux'
+      box_filepath      = "#{basedir}/Downloads/trusty-server-cloudimg-amd64-vagrant-disk1.box"
       config_vm_box_url = "file://#{box_filepath}"
+      box_base_url      = 'https://cloud-images.ubuntu.com/vagrant/trusty/current'
+      box_download_url  = "#{box_base_url}/trusty-server-cloudimg-amd64-vagrant-disk1.box"
+      if box_download
+	$stderr.puts "Downloading #{box_download_url} to #{box_filepath}"
+        %x|curl -k -L #{box_download_url} -o #{box_filepath}|
+      end
    else
      # cached boxes from https://developer.microsoft.com/en-us/microsoft-edge/tools/vms/
      # see also https://app.vagrantup.com/designerror/boxes/windows-7
