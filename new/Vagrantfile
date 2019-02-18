@@ -10,16 +10,15 @@ http_proxy        = ENV.fetch('HTTP_PROXY', nil)
 box_name          = ENV.fetch('BOX_NAME', 'trusty64')
 # for downloading boxes set to true export BOX_DOWNLOAD=true;vagrant up
 box_download      = ENV.fetch('BOX_DOWNLOAD', false)
-
 # e.g. for Windows test, export BOX_NAME='windows7' for ubuntu test, export BOX_NAME='trusty64'
-
-@debug      = ENV.fetch('DEBUG', 'false')
-box_basedir = ENV.fetch('BOX_BASEDIR', nil)
-box_memory  = ENV.fetch('BOX_MEMORY', '1024')
-box_cpus    = ENV.fetch('BOX_CPUS', '2')
-box_gui     = ENV.fetch('BOX_GUI', '')
-bootstrap   = ENV.fetch('BOOTSTRAP', 'false')
-@debug      = (@debug =~ (/^(true|t|yes|y|1)$/i))
+@debug        = ENV.fetch('DEBUG', 'false') # legacy default, left intact for the reference
+box_basedir   = ENV.fetch('BOX_BASEDIR', nil)
+box_memory    = ENV.fetch('BOX_MEMORY', '1024')
+box_cpus      = ENV.fetch('BOX_CPUS', '2')
+box_gui       = ENV.fetch('BOX_GUI', '')
+box_bootstrap = ENV.fetch('BOX_BOOTSTRAP', false)
+box_chefdk    = ENV.fetch('BOX_CHEFDK', false)
+@debug        = (@debug =~ (/^(true|t|yes|y|1)$/i))
 
 def file_dir_or_symlink_exists?(filepath)
   status = false
@@ -68,7 +67,7 @@ else
   # e.g. export BOX_BASEDIR='/media/sergueik/Windows8_OS/Users/Serguei'
   # NOTE: with a filesystem freespace-constrained environment also need
   # symlink the '~/VirtualBox VMs' and '~/.vagrant.d/boxes/#{box_name}' to
-  # matching directories under box_basedir
+  # point to matching directories under ${BOX_BASEDIR}
   basedir = box_basedir
   home = ENV.fetch('HOME')
   unless file_dir_or_symlink_exists? "#{home}/VirtualBox VMs"
@@ -126,7 +125,7 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
      # cached boxes from https://developer.microsoft.com/en-us/microsoft-edge/tools/vms/
      # see also https://app.vagrantup.com/designerror/boxes/windows-7
      config_vm_default = 'windows'
-     config_vm_bootstrap = bootstrap
+     config_vm_box_bootstrap = box_bootstrap
      if box_name =~ /xp/
        config_vm_box     = 'windows_xp'
        config_vm_box_url = "file://#{basedir}/Downloads/IE8.XP.For.Vagrant.box"
@@ -234,27 +233,63 @@ EOF
           chef.log_level = 'info'
         end
       else # windows
-        if config_vm_bootstrap
+        if config_vm_box_bootstrap
           config.vm.provision :shell, inline: <<-EOF
             set-executionpolicy Unrestricted
-            # TODO: Windows PowerShell updated your execution policy  successfully, but the setting is overridden by a policy defined at a more  specific scope.  Due to the override, your shell will retain its current effective execution policy of Bypass. Type "Get-ExecutionPolicy -List" to view
-            enable-memoting -force
-            # TODO: enable-remoting' is not recognized as the name of windows: a cmdlet, function, script file, or operable program
+            # TODO: Windows PowerShell updated your execution policy  successfully, but the setting is overridden by a policy defined at a more  specific scope.
+            # Due to the override, your shell will retain its current effective execution policy of Bypass. Type "Get-ExecutionPolicy -List" to view
+            # NOTE: when uncommended, leads to an error
+            # Bad HTTP response returned from server. Body(if present): (500). (WinRM::WinRMHTTPTransportError)
+            # run 'bootstrap_legacy.cmd' instead.
+            # enable-psremoting -force
           EOF
           if File.exist?('install_net4.ps1')
             $stderr.puts '(Re)install .Net 4'
             config.vm.provision :shell, :path => 'install_net4.ps1'
           end
-          if File.exist?('install_chocolatey.ps1')
-            $stderr.puts 'Install chocolatey'
-            config.vm.provision :shell, :path => 'install_chocolatey.ps1'
-          end
-          if File.exist?('install_chef.ps1')
-            $stderr.puts  'install puppet and chef using chocolatey'
-            config.vm.provision :shell, :path => 'install_chef.ps1', :args => ['-package_name', 'chefdk', '-package_version', '3.5.13']
-            # NOTE: Exit code was '1603'. Exit code indicates the following: Generic MSI Error. This is a local environment error, not an issue with a package or the MSI itself - it could mean a pending reboot is necessary prior to install or something else (like the same version is already installed). Please see MSI log if available. If not, try again adding '--install-arguments="'/l*v
+          if box_chefdk
+            if File.exist?('install_chocolatey.ps1')
+              $stderr.puts 'Install chocolatey'
+              config.vm.provision :shell, :path => 'install_chocolatey.ps1'
+            end
+            if File.exist?('install_chef.ps1')
+              $stderr.puts  'install puppet and chef using chocolatey'
+              config.vm.provision :shell, :path => 'install_chef.ps1', :args => ['-package_name', 'chefdk', '-package_version', '3.5.13']
+              # NOTE: Exit code was '1603'. Exit code indicates the following: Generic MSI Error. This is a local environment error, not an issue with a package or the MSI itself - it could mean a pending reboot is necessary prior to install or something else (like the same version is already installed). Please see MSI log if available. If not, try again adding '--install-arguments="'/l*v
+            end
           end
         end
+        $stderr.puts# create the maven repo mockup
+        # populate the maven repo mockup with real file to exercise the load
+        # the workspace directory has a small repository to seed the VM
+        appdata = 'APPDATA'
+        allusersprofile='ALLUSERSPROFILE'
+        config.vm.provision :shell, inline: <<-EOF
+     
+          $Repository="${env:#{allusersprofile}}/Jenkins/.m2/repository"
+          # NOTE: double quotes
+          # mkdir : Cannot find drive. A drive with the name '${env' does not exist.
+          if (-not (test-path -path $Repository)) {
+            mkdir $Repository
+            write-host ('Creating {0}' -f $Repository)
+          }
+
+          copy-item -recurse -force /vagrant/repository $Repository/..
+          write-host ('Populating {0}' -f $Repository)
+          # https://stackoverflow.com/questions/868264/du-in-powershell
+          # NOTE: verbose
+          function get-diskusage {
+            param(
+              [String]$path="${Repository}"
+            )
+            $groupedList = Get-ChildItem -Recurse -File $path | Group-Object directoryName | select name,@{name='length'; expression={($_.group | Measure-Object -sum length).sum } }
+            foreach ($dn in $groupedList) {
+                New-Object psobject -Property @{ directoryName=$dn.name; length=($groupedList | where { $_.name -like "$($dn.name)*" } | Measure-Object -Sum length).sum }
+            }
+          }
+          
+          get-diskusage -path $Repository
+        EOF
         # Use chef provisioner
         config.vm.provision :chef_solo do |chef|
           # chef.version = '14.10.9'

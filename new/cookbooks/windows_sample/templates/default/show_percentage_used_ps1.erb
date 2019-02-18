@@ -1,5 +1,7 @@
-$device_id = '<%= @device_id -%>'
-$device_id = 'c:'
+$device_id = '<%= @device_id -%>';
+if ($device_id -eq ''){
+  $device_id = 'C:';
+}
 $disk_info = get-wmiobject Win32_LogicalDisk -computerName '.' -filter "DeviceID='${device_id}'" | select-object Size,FreeSpace
 $percenage_free = [Math]::Round(100 *$disk_info.FreeSpace / $disk_info.Size)
 write-host ('Free space percentage on drive "{0}" is {1} %' -f $device_id, $percenage_free)
