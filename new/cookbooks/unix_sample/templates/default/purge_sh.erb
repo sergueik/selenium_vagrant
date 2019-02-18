@@ -8,7 +8,6 @@ if [ -z "${BASEDIR}" ] ; then
 fi
 # NOTE: @high_percent and @mount only needed for the df processing. Otherwise used by the recipe only
 echo "High percent: <%= @high_percent -%>"
-echo "Mount dir: <%= @mount_dir -%>"
 DO_PURGE=true
 # when DO_PURGE set to false, examine df output to determine
 if ! $DO_PURGE ; then
