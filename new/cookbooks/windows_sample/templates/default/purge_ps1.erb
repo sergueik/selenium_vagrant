@@ -5,7 +5,7 @@ $do_purge = <%= @do_purge -%>;
 if ($basedir -eq '' ) {
   $basedir = "${env:USERPROFILE}";
 }
-if ($do_purge){
+if ($do_purge) {
   get-childitem -path "${basedir}\.m2\repository" | where-object {
     $_.PSIsContainer } | foreach-object {
     $maven_directory = $_
@@ -16,7 +16,5 @@ if ($do_purge){
     } else {
       remove-item -path $full_maven_directory_name -recurse -force
     }
-    # will show no subdirectories, if the purge was successful
-    get-childitem -path "${basedir}\.m2\repository"
   }
 }

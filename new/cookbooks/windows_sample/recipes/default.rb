@@ -113,8 +113,19 @@ if percent_used > high_percent
     code <<-EOF
       write-host 'Explicitly measure disk space percentage used'
       & 'C:/users/vagrant/Desktop/show_percentage_used.ps1'
+      $repository_dir = "#{basedir}\\.m2\\repository";
+   
+      $subdirs = @( get-childitem -path $repository_dir)
+      write-host ('{0} subdirectories Currently in "{1}"' -f $subdirs.length, $repository_dir )
       write-host "Purge the repository in #{basedir}"
+      
+      ## purge ##
       & #{scriptdir}/purge.ps1
+      ## purge done ## 
+      # will show 0 subdirectories, if the purge was successful
+      $subdirs = @( get-childitem -path $repository_dir)
+      # use write-host to communicate the status to Chef 
+      write-host ('{0} subdirectories remaining in "{1}"' -f $subdirs.length, $repository_dir )
     EOF
   end
 
