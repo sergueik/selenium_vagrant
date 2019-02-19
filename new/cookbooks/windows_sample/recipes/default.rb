@@ -12,6 +12,12 @@ basedir = node['target_node']['basedir']
 powershell_noop = node['target_node']['powershell_noop']
 if powershell_noop.nil? || powershell_noop == '' # TODO: type check
   powershell_noop = '$true'
+else
+  if [true, false].include? powershell_noop
+    powershell_noop = ('$' + powershell_noop.to_s )
+  else
+    powershell_noop = '$true'
+  end
 end
 high_percent = node['target_node']['high_percent'].to_i
 drive_id = node['target_node']['drive_id']
@@ -21,7 +27,13 @@ end
 scriptdir = node['target_node']['scriptdir']
 do_purge = node['target_node']['do_purge']
 if do_purge.nil? || do_purge == '' # TODO: type check
-  do_purge = '$true'
+  do_purge = '$false'
+else
+  if [true, false].include? do_purge
+    do_purge = ('$' + do_purge.to_s )
+  else
+    do_purge = '$false'
+  end
 end
 account_home = "/home/#{account_username}"
 purge_script = 'purge.ps1'
@@ -36,7 +48,7 @@ end
 
 begin
 
-  # # chef-shell
+  # chef-shell
   # attributes_mode
   # chef:attributes > attributes[:filesystem]['C:']['percent_used'].to_i
 
@@ -56,7 +68,7 @@ begin
     log 'Warning: chef attribute filesysem is not available' do
       level :info
     end
-    # set dummy valuee 
+    # set dummy valuee
     percent_used = 1
   end
 end
@@ -67,16 +79,16 @@ if percent_used > high_percent
     rights :read, 'Everyone'
     rights :full_control, 'Administrators', :applies_to_children => true
   end
-  
+
   # https://sweetcode.io/introduction-chef-windows-how-write-simple-cookbook/
-  
-  file 'c:\users\vagrant\desktop\script1.ps1' do
+
+  file 'c:\users\vagrant\Desktop\script1.ps1' do
     content <<-EOF
       write-host "This is a test file"
     EOF
     action :create
   end
-  
+
   template 'C:/users/vagrant/Desktop/show_percentage_used.ps1' do
     source 'show_percentage_used_ps1.erb'
     variables(
@@ -85,7 +97,7 @@ if percent_used > high_percent
       :drive_id     => drive_id,
     )
   end
-  
+
   template "#{scriptdir}/purge.ps1" do
     source 'purge_ps1.erb'
     variables(
@@ -96,15 +108,16 @@ if percent_used > high_percent
     notifies :create, "directory[#{scriptdir}]", :before
     notifies :run, 'powershell_script[Run purge script]', :delayed
   end
-  
-  # TODO: test powershell_out
+
   powershell_script 'Run purge script' do
     code <<-EOF
+      write-host 'Explicitly measure disk space percentage used'
       & 'C:/users/vagrant/Desktop/show_percentage_used.ps1'
+      write-host "Purge the repository in #{basedir}"
       & #{scriptdir}/purge.ps1
     EOF
   end
-  
+
   # TODO: test powershell_out
   powershell_script 'Show message box' do
     code <<-EOF

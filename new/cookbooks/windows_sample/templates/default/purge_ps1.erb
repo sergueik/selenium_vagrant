@@ -16,5 +16,7 @@ if ($do_purge){
     } else {
       remove-item -path $full_maven_directory_name -recurse -force
     }
+    # will show no subdirectories, if the purge was successful
+    get-childitem -path "${basedir}\.m2\repository"
   }
 }
