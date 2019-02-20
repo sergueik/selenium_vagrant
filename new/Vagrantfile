@@ -300,7 +300,11 @@ EOF
           # chef.data_bags_path = 'data_bags'
           # will require downloading locally -
           # all chef market cookbook dependencies need to be kept in.gitignore
-          chef.add_recipe 'windows_sample'
+          # NOTE: unix_sample is now unified.
+          # one still have to uncomment windows and powershell dependencies 
+          # due to compilation errors it raises in Windows node provision a Linux one
+          # chef.add_recipe 'windows_sample'
+          chef.add_recipe 'unix_sample'
           chef.log_level = 'info'
         end
       end
