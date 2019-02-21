@@ -18,9 +18,26 @@ $drive_ids | foreach-object {
   write-host ('Used disk percentage on drive "{0}" is {1} %' -f $drive_id, $percenage_used)
   $percentage_threshold = $high_percents.$drive_id
   write-host ('Threshold used disk percentage on drive "{0}" is {1} %' -f $drive_id,$percentage_threshold)
-  if ($percenage_used  -gt $percentage_threshold ){
-    write-host 'A purge is required'
+    if ($percenage_used  -gt $percentage_threshold ){
+    $basedir = $basedirs.$drive_id
+
+    write-host ('A purge is required for {0}' -f $basedir )
+    if (test-path -path "${basedir}\.m2\repository") {
+      get-childitem -path "${basedir}\.m2\repository" | where-object {
+        $_.PSIsContainer } | foreach-object {
+        $maven_directory = $_
+        [String]$full_maven_directory_name = $maven_directory.FullName
+        write-host ('Removing "{0}"' -f $full_maven_directory_name)
+        if ($powershell_noop) {
+          remove-item -path $full_maven_directory_name -recurse -force -whatif
+        } else {
+          remove-item -path $full_maven_directory_name -recurse -force
+        }
+      }
+    } else {
+      write-host ('The directory "{0}" does not exist' -f "${basedir}\.m2\repository")
+    } 
   } else {
-    write-host 'Drive usage is low'
+    write-host ('Drive usage is low on "${0}"' -f $drive_id)
   }
 }
