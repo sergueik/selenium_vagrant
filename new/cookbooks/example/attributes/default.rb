@@ -11,8 +11,8 @@ default['target_node']['unix']['high_percent'] = 3
 # When do_purge is set to true, the bash script `purge.sh` is run in every chef run
 # otherwise it will examine the df output for filesystem mounted to @mount_dir
 default['target_node']['unix']['do_purge'] = true
-
-default['target_node']['windows']['script_version'] = '0.3'
+# note : the unix and windows versions  of the cookbook are completely independent
+default['target_node']['windows']['script_version'] = '0.4'
 # @basedir is the parent dir of .m2 e.g. for prod: '/opt/jenkins'
 # a.k.a. ALLUSERSPROFILE
 default['target_node']['windows']['basedir'] = 'c:\\Programdata\\jenkins'
@@ -26,9 +26,28 @@ default['target_node']['windows']['account_username'] = 'vagrant'
 default['target_node']['windows']['high_percent'] = 3
 # When do_purge is set to true, the bash script `purge.sh` is run in every chef run
 # otherwise powershell script will examine the FreeSpace and Size  on aspeciifc DeviceId using WMI
-default['target_node']['windows']['do_purge'] = true
 default['target_node']['windows']['powershell_noop'] = false
+default['target_node']['windows']['do_purge'] = true
 
-# the next configuration entry is shared bwteeen platforms
+# toggle between single and multi drive purge
+default['target_node']['windows']['multidrive'] = true
+# NOTE: data structures look terrible in Chef attributes
+default['target_node']['windows']['drive_ids'] = [
+  'C:',
+  'E:'
+]
+default['target_node']['windows']['basedirs'] = {
+  'C:' => 'C:\\Programdata\\jenkins',
+  'E:' => 'E:\\Jenkins',
+  'D:' => 'D:\\Jenkins'
+}
+# unused drive_ids will be ignored
+default['target_node']['windows']['high_percents'] = {
+  'C:' => 90,
+  'D:' => 10,
+  'E:' => 25
+}
+
+# the next configuration entry is shared between platforms
 # enable as needed
 default['target_node']['debug'] = false

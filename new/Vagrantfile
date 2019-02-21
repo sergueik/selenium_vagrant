@@ -3,6 +3,7 @@
 
 # Tested with Vagrant 2.0.2 https://releases.hashicorp.com/vagrant/2.0.2/
 require 'fileutils'
+require 'find'
 require 'pathname'
 
 vagrant_use_proxy = ENV.fetch('VAGRANT_USE_PROXY', nil)
@@ -194,7 +195,7 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
       vb.customize ['modifyvm', :id, '--usb', 'off']
     end
 # TODO: detect and abort run if there are vi files
-# FATAL: Chef::Exceptions::AttributeNotFound: could not find filename for attribute .default.rb.swp in cookbook unix_sample
+# FATAL: Chef::Exceptions::AttributeNotFound: could not find filename for attribute .default.rb.swp in cookbook example
 
     # Provision software
     puts "Provision software for '#{config.vm.box}'"
@@ -229,10 +230,28 @@ EOF
           # chef.data_bags_path = 'data_bags'
           # will require downloading locally -
           # all stock cookbooks need to be kept in.gitignore
-          chef.add_recipe 'unix_sample'
+          chef.add_recipe 'example'
           chef.log_level = 'info'
         end
       else # windows
+        # TODO: find and abort provisionfind and abort provision run if there are temp files to prevent
+        # FATAL: Chef::Exceptions::AttributeNotFound: could not find filename for attribute .default.rb.swp in cookbook example
+        found_tempfiles = false
+        tempfiles = []
+        Find.find('cookbooks') do |path|
+          if FileTest.file?(path)
+            if File.basename(path)[0] =~ /^\..*sw.$/
+              found_tempfiles = true
+        tempfiles += File.basename(path)[0]
+              break
+            else
+              next
+            end
+          end
+        end 
+        if found_tempfiles
+          $stderr.puts ( 'Found tempfiles: ' + tempfiles.join(','))
+        end
         if config_vm_box_bootstrap
           config.vm.provision :shell, inline: <<-EOF
             set-executionpolicy Unrestricted
@@ -265,7 +284,7 @@ EOF
         appdata = 'APPDATA'
         allusersprofile='ALLUSERSPROFILE'
         config.vm.provision :shell, inline: <<-EOF
-     
+
           $Repository="${env:#{allusersprofile}}/Jenkins/.m2/repository"
           # NOTE: double quotes
           # mkdir : Cannot find drive. A drive with the name '${env' does not exist.
@@ -287,7 +306,7 @@ EOF
                 New-Object psobject -Property @{ directoryName=$dn.name; length=($groupedList | where { $_.name -like "$($dn.name)*" } | Measure-Object -Sum length).sum }
             }
           }
-          
+
           get-diskusage -path $Repository
         EOF
         # Use chef provisioner
@@ -299,12 +318,13 @@ EOF
           chef.version = '13.10.4'
           # chef.data_bags_path = 'data_bags'
           # will require downloading locally -
-          # all chef market cookbook dependencies need to be kept in.gitignore
-          # NOTE: unix_sample is now unified.
-          # one still have to uncomment windows and powershell dependencies 
-          # due to compilation errors it raises in Windows node provision a Linux one
-          # chef.add_recipe 'windows_sample'
-          chef.add_recipe 'unix_sample'
+          # all chef market cookbook dependencies need to be kept in the '.gitignore'
+          # NOTE: example is now unified.
+          # one still have to comment
+          # 'windows' and 'powershell' dependency cookbook to provision
+          # Linux guest instance node on the Windows host
+          # due to compilation errors it raises
+          chef.add_recipe 'example'
           chef.log_level = 'info'
         end
       end

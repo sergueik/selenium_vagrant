@@ -3,7 +3,7 @@ require 'json'
 
 # https://github.com/sethvargo/chefspec
 
-describe 'unix_sample::default' do
+describe 'example::default' do
   before(:each) do
     @track = 'stable';
   end

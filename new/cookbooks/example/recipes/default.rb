@@ -21,7 +21,6 @@ if platform_kind == 'unix'
   # Install jdk 8 on trusty through Vagrantfile shell script provisioner
   # include_recipe 'java'
 
-
   node.default['jenkins']['master']['version'] = '2.51'
 
   account_username = node['target_node'][platform_kind]['account_username']
@@ -78,11 +77,9 @@ if platform_kind == 'unix'
 
     # Create purge script
     directory scriptdir do
-      action   :create
-      owner    account_username
-      group    account_username
-      # wrong direction
-      # notifies :create, "template[#{scriptdir}/#{purge_script}]", :before
+      action :create
+      owner  account_username
+      group  account_username
     end
 
     template ("#{scriptdir}/#{purge_script}") do
@@ -129,9 +126,10 @@ else
   log "Installing custom purge Maven repositories Powershell script version #{node['target_node'][platform_kind]['script_version']}" do
     level :info
   end
-  
+
   account_username = node['target_node'][platform_kind]['account_username']
   basedir = node['target_node'][platform_kind]['basedir']
+
   powershell_noop = node['target_node'][platform_kind]['powershell_noop']
   if powershell_noop.nil? || powershell_noop == '' # TODO: type check
     powershell_noop = '$true'
@@ -160,7 +158,6 @@ else
   end
   account_home = "/home/#{account_username}"
   purge_script = 'purge.ps1'
-  
   batch 'Enable execution of PowerShell scripts for 32 bit' do
     code <<-EOF
       REM TODO: branch for 64/32 Windows versions, for 32-bit Chef DK
@@ -168,13 +165,13 @@ else
       if /I not "%PROCESSOR_ARCHITECTURE%" EQU "AMD64"  %windir%/system32/WindowsPowerShell/v1.0/powershell -command "&{Set-ExecutionPolicy -ExecutionPolicy remotesigned -force -scope LocalMachine}"
     EOF
   end
-  
+
   begin
-  
+
     # chef-shell
     # attributes_mode
     # chef:attributes > attributes[:filesystem]['C:']['percent_used'].to_i
-  
+
     if node.attribute?('filesystem')
       fs           = node['filesystem']
       percent_used = fs[drive_id]['percent_used'].to_i
@@ -195,23 +192,65 @@ else
       percent_used = 1
     end
   end
-  
+  # Experimental: no scoping through percent_used
+  # multidrive only makes sense for Windows
+  multidrive_purge_script = 'multidrive_purge_scrip.ps1'
+  multidrive = node['target_node']['windows']['multidrive']
+  if multidrive
+    # NOTE:  has to maintain custom data attributes syncronized
+    basedirs = node['target_node']['windows']['basedirs']
+    drive_ids = node['target_node']['windows']['drive_ids']
+    high_percents = node['target_node']['windows']['high_percents']
+    log "The multidrive high percents are: #{high_percents}." do
+      level :info
+    end
+    multidrive_config = ''
+    drive_ids.each do |drive_id|
+      begin
+        multidrive_config += 'drive_id =' + drive_id + ','
+        multidrive_config += 'basedir =' + basedirs[drive_id] + ','
+        multidrive_config += 'high_percents =' + high_percents[drive_id].to_i.to_s + ','
+      rescue => e
+        log "The attributes are incomplete for #{drive_id}." do
+          level :info
+        end
+      end
+    end
+    log "The multidrive config is: #{multidrive_config}." do
+      level :info
+    end
+    drive_ids_json = drive_ids.to_json 
+    basedirs_json = basedirs.to_json 
+    high_percents_json = high_percents.to_json 
+    template "#{scriptdir}/multidrive_purge.ps1" do
+      source 'multidrive_purge_ps1.erb'
+      variables(
+        :do_purge           => do_purge,
+        :basedirs_json      => basedirs_json,
+        :high_percents_json => high_percents_json,
+        :drive_ids_json     => drive_ids_json,
+        :powershell_noop    => powershell_noop,
+      )
+      # notifies :create, "directory[#{scriptdir}]", :before
+      # notifies :run, 'powershell_script[Run purge script]', :delayed
+    end
+  end
   if percent_used > high_percent
     directory scriptdir do
       action :create
       rights :read, 'Everyone'
       rights :full_control, 'Administrators', :applies_to_children => true
     end
-  
+
     # https://sweetcode.io/introduction-chef-windows-how-write-simple-cookbook/
-  
+
     file 'c:\users\vagrant\Desktop\script1.ps1' do
       content <<-EOF
         write-host "This is a test file"
       EOF
       action :create
     end
-  
+
     template 'C:/users/vagrant/Desktop/show_percentage_used.ps1' do
       source 'show_percentage_used_ps1.erb'
       variables(
@@ -220,38 +259,38 @@ else
         :drive_id     => drive_id,
       )
     end
-  
+
     template "#{scriptdir}/purge.ps1" do
       source 'purge_ps1.erb'
       variables(
-        :do_purge           => do_purge,
-        :basedir            => basedir,
-        :powershell_noop    => powershell_noop,
+        :do_purge        => do_purge,
+        :basedir         => basedir,
+        :powershell_noop => powershell_noop,
       )
       notifies :create, "directory[#{scriptdir}]", :before
       notifies :run, 'powershell_script[Run purge script]', :delayed
     end
-  
+
     powershell_script 'Run purge script' do
       code <<-EOF
         write-host 'Explicitly measure disk space percentage used'
         & 'C:/users/vagrant/Desktop/show_percentage_used.ps1'
         $repository_dir = "#{basedir}\\.m2\\repository";
-     
+
         $subdirs = @( get-childitem -path $repository_dir)
         write-host ('{0} subdirectories Currently in "{1}"' -f $subdirs.length, $repository_dir )
         write-host "Purge the repository in #{basedir}"
-        
+
         ## purge ##
         & #{scriptdir}/purge.ps1
-        ## purge done ## 
+        ## purge done ##
         # will show 0 subdirectories, if the purge was successful
         $subdirs = @( get-childitem -path $repository_dir)
-        # use write-host to communicate the status to Chef 
+        # use write-host to communicate the status to Chef
         write-host ('{0} subdirectories remaining in "{1}"' -f $subdirs.length, $repository_dir )
       EOF
     end
-  
+
     # TODO: test powershell_out
     powershell_script 'Show message box' do
       code <<-EOF
@@ -271,7 +310,7 @@ else
       level :info
     end
   end
-  
+
 end	
 log 'Finished configuring Node.' do
   level :info

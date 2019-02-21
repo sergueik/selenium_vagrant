@@ -1,0 +1,26 @@
+# Cookbook for multi drive free space examination / maven repository cleanup
+$drive_ids = (@'
+<%= @drive_ids_json %>
+'@ -join '') | convertfrom-json;
+$basedirs =  ('<%= @basedirs_json -%>' -join '') | convertfrom-json;
+$high_percents = ('<%= @high_percents_json -%>' -join '') | convertfrom-json;
+
+write-host ('drive_ids: {0}' -f  $drive_ids)
+write-host ('basedirs: {0}' -f  $basedirs)
+write-host ('high_percents: {0}' -f  $high_percents)
+$drive_ids | foreach-object { 
+  $drive_id = $_
+  if ($drive_id -eq ''){
+    $drive_id = 'C:'
+  }
+  $disk_info = get-wmiobject Win32_LogicalDisk -computerName '.' -filter "DeviceID='${drive_id}'" | select-object Size,FreeSpace
+  $percenage_used = [Math]::Round(100 * (1 - $disk_info.FreeSpace / $disk_info.Size))
+  write-host ('Used disk percentage on drive "{0}" is {1} %' -f $drive_id, $percenage_used)
+  $percentage_threshold = $high_percents.$drive_id
+  write-host ('Threshold used disk percentage on drive "{0}" is {1} %' -f $drive_id,$percentage_threshold)
+  if ($percenage_used  -gt $percentage_threshold ){
+    write-host 'A purge is required'
+  } else {
+    write-host 'Drive usage is low'
+  }
+}

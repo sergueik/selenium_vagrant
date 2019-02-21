@@ -1,4 +1,4 @@
-name             'unix_sample'
+name             'example'
 maintainer       'Serguei Kouzmine'
 maintainer_email 'koumine_serguei@yahoo.com'
 description      'Installs/Configures sample Bash script to drain maven repo inside Jenkins when specified disk percent_used getting too high'
