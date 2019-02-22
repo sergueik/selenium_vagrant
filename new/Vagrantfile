@@ -11,6 +11,7 @@ http_proxy        = ENV.fetch('HTTP_PROXY', nil)
 box_name          = ENV.fetch('BOX_NAME', 'trusty64')
 # for downloading boxes set to true export BOX_DOWNLOAD=true;vagrant up
 box_download      = ENV.fetch('BOX_DOWNLOAD', false)
+box_download      = (box_download =~ (/^(true|t|yes|y|1)$/i))
 # e.g. for Windows test, export BOX_NAME='windows7' for ubuntu test, export BOX_NAME='trusty64'
 @debug        = ENV.fetch('DEBUG', 'false') # legacy default, left intact for the reference
 box_basedir   = ENV.fetch('BOX_BASEDIR', nil)
@@ -216,8 +217,8 @@ du -s $REPOSITORY
   apt-get -qqy update
   apt-get install -qqy openjdk-7-jdk
   update-alternatives --set java /usr/lib/jvm/java-7-openjdk-amd64/jre/bin/java
-  # starting from 2.54 Jenkins requires java 1.8
-  # TODO: enforce legacy  Jenkins in recipe
+  # NOTE: starting from 2.54 Jenkins requires java 1.8
+  # TODO: enforce legacy Jenkins in recipe
   add-apt-repository -y ppa:openjdk-r/ppa
   apt-get -qqy update
   apt-get install -qqy openjdk-8-jdk
@@ -232,9 +233,11 @@ EOF
           # all stock cookbooks need to be kept in.gitignore
           chef.add_recipe 'example'
           chef.log_level = 'info'
+	  # TODO: fix error with compiling windows cookbooks which become a dependency of the multi-platform recipe now:
+	  # FATAL: ArgumentError: unknown keyword: on_platforms
         end
       else # windows
-        # TODO: find and abort provisionfind and abort provision run if there are temp files to prevent
+        # TODO: find and abort provision run if there are temp vi files in cookbooks
         # FATAL: Chef::Exceptions::AttributeNotFound: could not find filename for attribute .default.rb.swp in cookbook example
         found_tempfiles = false
         tempfiles = []
@@ -282,13 +285,12 @@ EOF
         # populate the maven repo mockup with real file to exercise the load
         # the workspace directory has a small repository to seed the VM
         appdata = 'APPDATA'
-        allusersprofile='ALLUSERSPROFILE'
+        allusersprofile = 'ALLUSERSPROFILE'
         config.vm.provision :shell, inline: <<-EOF
 
-          $Repository="${env:#{allusersprofile}}/Jenkins/.m2/repository"
-          # NOTE: double quotes
-          # mkdir : Cannot find drive. A drive with the name '${env' does not exist.
-          if (-not (test-path -path $Repository)) {
+          $Repository = "${env:#{allusersprofile}}/Jenkins/.m2/repository"
+	  # NOTE: double quotes required to prevent error (mkdir: Cannot find drive. A drive with the name '${env' does not exist).
+	  if (-not (test-path -path $Repository)) {
             mkdir $Repository
             write-host ('Creating {0}' -f $Repository)
           }
@@ -299,7 +301,7 @@ EOF
           # NOTE: verbose
           function get-diskusage {
             param(
-              [String]$path="${Repository}"
+              [String]$pathi = "${Repository}"
             )
             $groupedList = Get-ChildItem -Recurse -File $path | Group-Object directoryName | select name,@{name='length'; expression={($_.group | Measure-Object -sum length).sum } }
             foreach ($dn in $groupedList) {
