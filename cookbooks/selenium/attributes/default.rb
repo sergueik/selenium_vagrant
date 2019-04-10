@@ -3,6 +3,9 @@ default['selenium']['firefox']['lang'] = 'en-US'
 default['selenium']['selenium']['url'] = \
 "http://selenium-release.storage.googleapis.com/#{default['selenium']['selenium']['version'].gsub(/\.\d+$/, '')}/selenium-server-standalone-#{default['selenium']['selenium']['version']}.jar"
 default['selenium']['firefox']['version'] = '35.0.1'
+# patching the undefined 'kernel' method
+kernel = { 'machine'  => 'x86_64' }
+
 default['selenium']['firefox']['arch'] = kernel['machine'] =~ /x86_64/ ? 'x86_64' : 'i686'
 default['selenium']['firefox']['releases_url'] = 'https://download-installer.cdn.mozilla.net/pub/firefox/releases'
 default['selenium']['firefox']['url'] = \
