@@ -1,0 +1,109 @@
+#!/bin/sh
+
+# set -x
+set -e
+
+SELENIUM_USER='vncuser'
+SELENIUM_HOME='/home/vncuser/selenium'
+SERVICE_NAME='selenium'
+PATH=/sbin:/usr/sbin:/bin:/usr/bin
+# This assumes no other version was installed already
+PATH=$PATH:${SELENIUM_HOME}/firefox
+export PATH
+DEFAULTS="/etc/default/${SERVICE_NAME}"
+INITSCRIPT="$(basename "$0")"
+JOB="${INITSCRIPT%.sh}"
+export NODE_HOST=127.0.0.1
+export NODE_PORT=5555
+export HUB_IP_ADDRESS=127.0.0.1
+export HUB_PORT=4444
+export NODE_CONFIG="${SELENIUM_HOME}/node.json"
+export DISPLAY_PORT=99
+export JVM_ARGS="-XX:MaxPermSize=256M -Xmn128M -Xms256M -Xmx256M"
+export JAR_FILENAME='selenium.jar'
+export SELENIUM_JAR_VERSION=2.44.0 # currently unused
+export ROLE=node
+
+PIDFILE="/var/run/${ROLE}.pid"
+LOGFILE_DIR='var/log'
+PIDFILE_DIR='/var/run'
+COMMAND="$1"
+
+# TODO: process when JAVA_HOME not set
+export JAVA_HOME='/usr/bin'
+SELENIUM_ARGS=`cat<<END_ARGS
+-classpath ${SELENIUM_HOME}/log4j-1.2.17.jar:${SELENIUM_HOME}/${JAR_FILENAME} \
+-Dlog4j.configuration=file://${SELENIUM_HOME}/node.log4j.properties \
+org.openqa.grid.selenium.GridLauncher \
+-role ${ROLE} \
+-host ${NODE_HOST} \
+-port ${NODE_PORT} \
+-hub http://${HUB_IP_ADDRESS}:${HUB_PORT}/hub/register \
+-nodeConfig ${NODE_CONFIG}  \
+-browserTimeout 12000 -timeout 12000 \
+-ensureCleanSession true \
+-Dwebdriver.chrome.driver=/home/vncuser/selenium/chromedriver/chromedriver \
+-trustAllSSLCertificates
+END_ARGS
+`
+export SELENIUM_ARGS
+[ -r "$DEFAULTS" ] && . "$DEFAULTS"
+. /lib/init/vars.sh
+. /lib/lsb/init-functions
+DAEMON_ARGS="--chdir ${SELENIUM_HOME} --quiet --pidfile ${PIDFILE} --user ${SELENIUM_USER}"
+DAEMON_CMD="/usr/bin/java -- $JVM_ARGS ${SELENIUM_ARGS}"
+
+start() {
+    logger "Starting Selenium Grid in ${SERVICE_ROLE} mode..."
+
+    mkdir -p "$LOGFILE_DIR" "$PIDFILE_DIR"
+    chown -R $SELENIUM_USER "$LOGFILE_DIR" "$PIDFILE_DIR"
+
+    export DISPLAY=:$DISPLAY_PORT
+
+    start-stop-daemon $DAEMON_ARGS --start --background --make-pidfile --chuid $SELENIUM_USER --exec $DAEMON_CMD
+    RETVAL="$?"
+
+    return "$RETVAL"
+}
+
+stop() {
+    logger "Stopping Selenium Grid instance..."
+
+    start-stop-daemon $DAEMON_ARGS --stop --retry=TERM/30/KILL/5
+    RETVAL="$?"
+
+    rm -f $PIDFILE
+
+    return "$RETVAL"
+}
+
+status() {
+    if [ -e $PIDFILE ]; then
+        status_of_proc -p $PIDFILE $DAEMON "$SERVICE_NAME process" && exit 0 || exit $?
+    else
+        log_daemon_msg "$SERVICE_NAME: Process is not running."
+        log_end_msg 0
+        exit 4
+    fi
+}
+
+case $COMMAND in
+    start)
+        start
+        ;;
+    stop)
+        stop
+        ;;
+    restart)
+        stop && start
+        ;;
+    status)
+        status
+        ;;
+    *)
+        echo "Usage: service $JOB (start|stop|restart|status)" >&2
+        exit 1
+esac
+
+exit $RETVAL

@@ -1,0 +1,28 @@
+{
+  "capabilities": [
+    {
+      "browserName": "chrome",
+      "version": "",
+      "platform": "LINUX",
+      "maxInstances": 1
+    },
+    {
+      "browserName": "firefox",
+      "version": "",
+      "platform": "LINUX",
+      "maxInstances": 5
+    }
+  ],
+  "configuration": {
+    "role": "node",
+    "host": "127.0.0.1",
+    "maxSession": 5,
+    "nodeTimeout": 12000,
+    "nodePolling": 2000,
+    "registerCycle": 1000,
+    "cleanUpCycle": 2000,
+    "timeout": 30000,
+    "loggingPrefs" : webdriver.logging.Level.ALL,
+    "register": true
+  }
+}
