@@ -187,12 +187,11 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
           # TODO - choose which X server to install
           chef.add_recipe 'xvfb'
           chef.add_recipe 'wrapper_vnc'
-	  # TODO: cannot determine user id for 'vncuser', does the user exist on this system?
-
           chef.add_recipe 'selenium_hub'
           chef.add_recipe 'selenium_node'
           chef.add_recipe 'firebug'
           chef.add_recipe 'wrapper_groovy'
+          chef.add_recipe 'wrapper_maven'
           # dependency cookbooks:
           
             # abcpdf/
@@ -213,6 +212,7 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
             # hostsfile/
             # java/
             # log4j/
+            # maven/
             # mingw/
             # ms_dotnet2/
             # ms_dotnet4/
@@ -221,6 +221,7 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
             # sample/
             # selenium/
             # selenium_hub/
+            # selenium_maven/
             # selenium_node/
             # seven_zip/
             # spoon/

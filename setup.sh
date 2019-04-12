@@ -1,5 +1,5 @@
 #!/bin/bash
-for cookbook in 'chrome' 'chef_handler' 'dmg' 'yum' 'apt' 'windows' 'java' 'hostsfile' 'vnc' 'x-windows' 'gnome' 'ark' 'build-essential' 'seven_zip' 'mingw'; do 
+for cookbook in 'chrome' 'chef_handler' 'dmg' 'yum' 'apt' 'windows' 'java' 'hostsfile' 'vnc' 'x-windows' 'gnome' 'ark' 'build-essential' 'seven_zip' 'mingw' 'maven'; do 
 if [ ! -f "${cookbook}.tgz" ] ; then
   wget -O "${cookbook}.tgz" "https://supermarket.chef.io/cookbooks/${cookbook}/download/"
 fi
@@ -49,6 +49,9 @@ fi
 if [ ! -f 'mingw.tgz' ] ; then
   wget -O mingw.tgz https://supermarket.chef.io/cookbooks/mingw/download/
 fi
+if [ ! -f 'maven.tgz' ] ; then
+  wget -O maven.tgz https://supermarket.chef.io/cookbooks/maven/download/
+fi
 pushd cookbooks
 tar xzf ../chrome.tgz 
 tar xzf ../apt.tgz 
@@ -63,6 +66,7 @@ tar xzf ../gnome.tgz
 tar xzf ../build-essential.tgz 
 tar xzf ../seven_zip.tgz 
 tar xzf ../mingw.tgz 
+tar xzf ../maven.tgz 
 popd
 
 
