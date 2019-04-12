@@ -180,19 +180,24 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
           # chef.version = '12.3.0'
           chef.version = '13.10.4'
           chef.data_bags_path = 'data_bags'
-          chef.add_recipe 'wrapper_chrome'
-          chef.add_recipe 'wrapper_java'
-          chef.add_recipe 'wrapper_hostsfile'
-          chef.add_recipe 'tweak_proxy_settings'
-          # TODO - choose which X server to install
-          chef.add_recipe 'xvfb'
-          chef.add_recipe 'wrapper_vnc'
-          chef.add_recipe 'selenium_hub'
-          chef.add_recipe 'selenium_node'
-          chef.add_recipe 'firebug'
-          chef.add_recipe 'wrapper_groovy'
-          chef.add_recipe 'wrapper_maven'
-          # dependency cookbooks:
+	  [ 
+            'wrapper_chrome',
+            'wrapper_java',
+            'wrapper_hostsfile',
+            'tweak_proxy_settings',
+            # TODO - choose which X server to install
+            'xvfb',
+            'wrapper_vnc',
+            'selenium_hub',
+            'selenium_node',
+            'firebug',
+            'wrapper_groovy',
+            'wrapper_maven',
+            'wrapper_gradle',
+	  ].each do |recipe|
+            chef.add_recipe recipe
+	  end
+          # dependency cookbooksi listed below for the refence
           
             # abcpdf/
             # ark/
@@ -207,6 +212,7 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
             # firebug/
             # gnome/
             # google-chrome/
+            # gradle/
             # groovy/
             # homebrew/
             # hostsfile/

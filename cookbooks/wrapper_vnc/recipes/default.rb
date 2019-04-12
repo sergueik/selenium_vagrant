@@ -2,24 +2,21 @@ log "Installing vnc" do
   level :info
 end
 
-group 'vncuser' do
-  append true
-  gid    1014
-  system true
-  action :create
-  notifies :create, 'user[vncuser]', :delayed
+# Create user & group
+user 'vncuser' do
+  # undefined method `supports' for Chef::Resource::User::LinuxUser
+  # supports :manage_home => true
+  manage_home true
+  gid         'users'
+  system      true
+  comment     'vnc selenium user'
+  password    'vncuser'
 end
 
-user 'vncuser' do
-  username 'vncuser'
-  comment  'A vnc selenium user'
-  uid      1014
-  group    'vncuser'
-  # cannot determine group id for 'vncuser', does the group exist on this system
-  home     '/home/vncuser'
-  shell    '/bin/bash'
-  password 'vncuser'
-  system   true
+group 'vncuser' do
+  action   :create
+  members  ['vncuser']
+  # optional
   notifies :install, 'package[vnc-client]', :delayed
 end
 
