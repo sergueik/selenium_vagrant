@@ -39,6 +39,7 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
     end
   end
 
+  # NOTE: the same list of recipes is currently applied to both roles
   config.vm.define :hub do |instance|
     instance.vm.host_name = 'selenium-hub'
     instance.vm.network 'forwarded_port', guest: 4444, host: 4444, id: 'selenium', auto_correct:true
@@ -47,15 +48,19 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
 
     instance.vm.provision :chef_solo do |chef|
       chef.data_bags_path = 'data_bags'
-      chef.add_recipe 'wrapper_java'
-      chef.add_recipe 'wrapper_hostsfile'
-      chef.add_recipe 'tweak_proxy_settings'
-      chef.add_recipe 'selenium'
-      chef.add_recipe 'xvfb'
-      chef.add_recipe 'vnc'
-      chef.add_recipe 'selenium_hub'
-      chef.add_recipe 'selenium_node'
-      chef.add_recipe 'firebug'
+      [
+        'wrapper_java',
+        'wrapper_hostsfile',
+        'tweak_proxy_settings',
+        'selenium',
+        'xvfb',
+        'vnc',
+        'selenium_hub',
+        'selenium_node',
+        'firebug'
+      ].each do |r|
+        chef.add_recipe r
+      end
       chef.log_level = 'info' 
     end
   end
@@ -67,18 +72,20 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
 
     instance.vm.provision :chef_solo do |chef|
       chef.data_bags_path = 'data_bags'
-      chef.add_recipe 'wrapper_java'
-      chef.add_recipe 'wrapper_hostsfile'
-      chef.add_recipe 'tweak_proxy_settings'
-      chef.add_recipe 'selenium'
-      chef.add_recipe 'xvfb'
-      chef.add_recipe 'vnc'
-      chef.add_recipe 'selenium_hub'
-      chef.add_recipe 'selenium_node'
-      chef.add_recipe 'firebug'
+      [
+        'wrapper_java',
+        'wrapper_hostsfile',
+        'tweak_proxy_settings',
+        'selenium',
+        'xvfb',
+        'vnc',
+        'selenium_hub',
+        'selenium_node',
+        'firebug'
+      ].each do |r|
+        chef.add_recipe r
+      end
       chef.log_level = 'info' 
     end
   end
-
-
 end

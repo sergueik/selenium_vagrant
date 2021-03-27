@@ -15,14 +15,14 @@ end
 # Enable the Xbfb server service
 # https://gist.github.com/dmitriy-kiriyenko/974392
 template '/etc/init.d/Xvfb' do 
- variables(
-     :display_port => node['xvfb']['display_port'],
-     :user_name => account_username
- ) 
- source 'xvfb.erb'
- owner 'root'
- group 'root'
- mode 00755
+  variables(
+    :display_port => node['xvfb']['display_port'],
+    :user_name => account_username
+  ) 
+  source 'xvfb.erb'
+  owner 'root'
+  group 'root'
+  mode 00755
 end 
 
 # Start X window server

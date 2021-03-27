@@ -179,20 +179,26 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
           # http://stackoverflow.com/questions/31149600/undefined-method-cheffish-for-nilnilclass-when-provisioning-chef-with-vagra
           chef.version = '12.3.0'
           chef.data_bags_path = 'data_bags'
-          chef.add_recipe 'wrapper_chrome'
-          chef.add_recipe 'wrapper_java'
-          chef.add_recipe 'wrapper_hostsfile'
-          chef.add_recipe 'tweak_proxy_settings'
-          # TODO - choose which X server to install
-          chef.add_recipe 'xvfb'
-          chef.add_recipe 'wrapper_vnc'
-          chef.add_recipe 'selenium_hub'
-          chef.add_recipe 'selenium_node'
-          chef.add_recipe 'firebug'
-          chef.add_recipe 'wrapper_groovy'
-          # NOTE: time-consuming
-          # chef.add_recipe 'perl'
-          # chef.add_recipe 'custom_cpan_modules'
+          [
+            'wrapper_chrome',
+            'wrapper_java',
+            'wrapper_hostsfile',
+            # NOTE: time-consuming
+            # 'perl',
+            # 'custom_cpan_modules',
+            'tweak_proxy_settings',
+            # 'selenium',
+            'xvfb',
+            # TODO - choose which X server to install
+            # 'vnc', 
+            'wrapper_vnc',
+            'selenium_hub',
+            'selenium_node',
+            'firebug',
+            'wrapper_groovy'
+          ].each do |r|
+            chef.add_recipe r
+          end
           chef.log_level = 'info'
         end
       else # windows
