@@ -8,18 +8,18 @@ end
 
 # Define variables for attributes
 
-account_username      = node['selenium_hub']['account_username']
-account_home          = "/home/#{account_username}"
-selenium_home         = "#{account_home}/selenium"
-account_home          = "/home/#{account_username}"
-selenium_home         = "#{account_home}/selenium"
-selenium_version      = node['selenium_hub']['selenium']['version']
-standalone_script     = 'run-hub.sh'
-log_conf              = 'hub.log4j.properties'
-log4j_xml             = 'log4j.xml'
-logfile               = 'hub.log'
-logger                = 'INFO'
-jar_filename          = 'selenium.jar'
+account_username  = node['selenium_hub']['account_username']
+account_home      = "/home/#{account_username}"
+selenium_home     = "#{account_home}/selenium"
+account_home      = "/home/#{account_username}"
+selenium_home     = "#{account_home}/selenium"
+selenium_version  = node['selenium_hub']['selenium']['version']
+standalone_script = 'run-hub.sh'
+log_conf          = 'hub.log4j.properties'
+log4j_xml         = 'log4j.xml'
+logfile           = 'hub.log'
+logger            = 'INFO'
+jar_filename      = 'selenium.jar'
 
 %w{selenium_hub}.each do |init_script| 
 

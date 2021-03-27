@@ -14,4 +14,3 @@ default['selenium']['chrome_driver']['releases_url'] = 'http://chromedriver.stor
 default['selenium']['chrome_driver']['arch'] = kernel['machine'] =~ /x86_64/ ? '64' : '32'
 default['selenium']['chrome_driver']['url'] = \
 "#{default['selenium']['chrome_driver']['releases_url']}/#{default['selenium']['chrome_driver']['version']}/chromedriver_linux#{default['selenium']['chrome_driver']['arch']}.zip"
-

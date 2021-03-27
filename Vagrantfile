@@ -9,8 +9,8 @@ vagrant_use_proxy = ENV.fetch('VAGRANT_USE_PROXY', nil)
 http_proxy        = ENV.fetch('HTTP_PROXY', nil)
 box_name          = ENV.fetch('BOX_NAME', '')
 debug             = ENV.fetch('DEBUG', 'false')
-box_memory        = ENV.fetch('BOX_MEMORY', '')
-box_cpus          = ENV.fetch('BOX_CPUS', '')
+box_memory        = ENV.fetch('BOX_MEMORY', '1024')
+box_cpus          = ENV.fetch('BOX_CPUS', '2')
 box_gui           = ENV.fetch('BOX_GUI', '')
 debug             = (debug =~ (/^(true|t|yes|y|1)$/i))
 
@@ -177,7 +177,8 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
         config.vm.provision :chef_solo do |chef|
           # for cheffish bug in 12.4.1 see
           # http://stackoverflow.com/questions/31149600/undefined-method-cheffish-for-nilnilclass-when-provisioning-chef-with-vagra
-          chef.version = '12.3.0'
+          # chef.version = '12.3.0'
+          chef.version = '13.10.4'
           chef.data_bags_path = 'data_bags'
           [
             'wrapper_chrome',
@@ -195,18 +196,70 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
             'selenium_hub',
             'selenium_node',
             'firebug',
-            'wrapper_groovy'
-          ].each do |r|
-            chef.add_recipe r
-          end
+            'wrapper_groovy',
+            'wrapper_maven',
+            'wrapper_gradle',
+	  ].each do |recipe|
+            chef.add_recipe recipe
+	  end
+          # dependency cookbooksi listed below for the refence
+          
+            # abcpdf/
+            # ark/
+            # build-essential/
+            # chef_handler/
+            # chrome/
+            # custom_cpan_modules/
+            # custom_nuget/
+            # custom_powershell/
+            # databag_manager/
+            # dmg/
+            # firebug/
+            # gnome/
+            # google-chrome/
+            # gradle/
+            # groovy/
+            # homebrew/
+            # hostsfile/
+            # java/
+            # log4j/
+            # maven/
+            # mingw/
+            # ms_dotnet2/
+            # ms_dotnet4/
+            # ms_dotnet45/
+            # powershell/
+            # sample/
+            # selenium/
+            # selenium_hub/
+            # selenium_maven/
+            # selenium_node/
+            # seven_zip/
+            # spoon/
+            # tweak_proxy_settings/
+            # vnc/
+            # windows/
+            # wrapper_chrome/
+            # wrapper_groovy/
+            # wrapper_hostsfile/
+            # wrapper_java/
+            # wrapper_vnc/
+            # wrapper_yum/
+            # xvfb/
+            # x-windows/
+
+          # NOTE: time-consuming
+          # chef.add_recipe 'perl'
+          # chef.add_recipe 'custom_cpan_modules'
+>>>>>>> 29f1efd0d0c26b4f4cbc6ce7dcd385148aec29df
           chef.log_level = 'info'
         end
       else # windows
         if config_vm_newbox
-          config.vm.provision :shell, inline: <<-END_SCRIPT1
+          config.vm.provision :shell, inline: <<-EOF
   set-executionpolicy Unrestricted
-  enable-emoting -Force
-          END_SCRIPT1
+  enable-remoting -Force
+          EOF
           # install .Net 4
           config.vm.provision :shell, :path => 'install_net4.ps1'
           # install chocolatey

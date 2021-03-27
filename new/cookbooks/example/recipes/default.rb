@@ -108,12 +108,12 @@ if platform_kind == 'unix'
     end
     # CAN duplicate?
     service 'stop jenkins' do
-      action       :stop
+      action       :nothing
       service_name 'jenkins'
       subscribes   :stop, 'bash[run purge script]', :before
     end	
     service 'start jenkins' do
-      action       :start
+      action       :nothing
       service_name 'jenkins'
       subscribes   :start, 'bash[run purge script]', :delayed
     end	

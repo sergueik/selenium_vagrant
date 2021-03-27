@@ -1,14 +1,34 @@
-# Cookbook for multi drive free space examination / maven repository cleanup
+<%# multi drive free space examination and clenu of maven repository located on that drive %>
+
+<%#
+# Uses json serialized argumentst to avoid conversion e.g. the boolean in Powershell need to look like $true or $false
+# accessing the values of the hash takes MS Visual Basic-style semantics
+$params_hash = (@'
+<%= @params_hash_as_json %>
+'@ -join '') | convertfrom-json
+$hash_keys = @($params_hash | get-member -membertype NoteProperty | select-object -expandproperty name)
+write-host 'params hash keys:'
+write-host $hash_keys
+write-host 'params hash keys and values:'
+$hash_keys | foreach-object {
+  $hash_keyi = $_
+  if (($params_hash.$hash_key -eq $null) -or ($params_hash.$hash_key -eq '')) {
+    write-host ('Skipping {0}' -f $hash_key )
+  } else {
+    write-host ('Using {0} => "{1}"' -f $hash_key, $params_hash.$hash_key )
+  }
+}
+%>
 $drive_ids = (@'
 <%= @drive_ids_json %>
 '@ -join '') | convertfrom-json;
-$basedirs =  ('<%= @basedirs_json -%>' -join '') | convertfrom-json;
-$high_percents = ('<%= @high_percents_json -%>' -join '') | convertfrom-json;
+$basedirs = '<%= @basedirs_json -%>' | convertfrom-json;
+$high_percents = '<%= @high_percents_json -%>' | convertfrom-json;
 
 write-host ('drive_ids: {0}' -f  $drive_ids)
 write-host ('basedirs: {0}' -f  $basedirs)
 write-host ('high_percents: {0}' -f  $high_percents)
-$drive_ids | foreach-object { 
+$drive_ids | foreach-object {
   $drive_id = $_
   if ($drive_id -eq ''){
     $drive_id = 'C:'
@@ -19,24 +39,23 @@ $drive_ids | foreach-object {
   $percentage_threshold = $high_percents.$drive_id
   write-host ('Threshold used disk percentage on drive "{0}" is {1} %' -f $drive_id,$percentage_threshold)
     if ($percenage_used  -gt $percentage_threshold ){
-    $basedir = $basedirs.$drive_id
+      $basedir = $basedirs.$drive_id
 
-    write-host ('A purge is required for {0}' -f $basedir )
-    if (test-path -path "${basedir}\.m2\repository") {
-      get-childitem -path "${basedir}\.m2\repository" | where-object {
-        $_.PSIsContainer } | foreach-object {
-        $maven_directory = $_
-        [String]$full_maven_directory_name = $maven_directory.FullName
-        write-host ('Removing "{0}"' -f $full_maven_directory_name)
-        if ($powershell_noop) {
-          remove-item -path $full_maven_directory_name -recurse -force -whatif
-        } else {
-          remove-item -path $full_maven_directory_name -recurse -force
-        }
+      write-host ('A purge is required for {0}' -f $basedir )
+      if (test-path -path "${basedir}\.m2\repository") {
+        get-childitem -path "${basedir}\.m2\repository" | where-object { $_.PSIsContainer } | foreach-object {
+          $maven_directory = $_
+          [String]$full_maven_directory_name = $maven_directory.FullName
+          write-host ('Removing "{0}"' -f $full_maven_directory_name)
+          if ($powershell_noop) {
+            remove-item -path $full_maven_directory_name -recurse -force -whatif
+          } else {
+            remove-item -path $full_maven_directory_name -recurse -force
+          }
       }
     } else {
       write-host ('The directory "{0}" does not exist' -f "${basedir}\.m2\repository")
-    } 
+    }
   } else {
     write-host ('Drive usage is low on "${0}"' -f $drive_id)
   }
