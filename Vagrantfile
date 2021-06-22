@@ -187,8 +187,11 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
             'wrapper_chrome',
             'wrapper_java',
             'wrapper_hostsfile',
+            # NOTE: time-consuming
+            # 'perl',
+            # 'custom_cpan_modules',
             'tweak_proxy_settings',
-            # TODO - choose which X server to install
+            # 'selenium',
             'xvfb',
             # TODO: fix dependency error with groovy-2.4.5.zip
             # 'wrapper_vnc',
@@ -252,6 +255,7 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
           # NOTE: time-consuming
           # chef.add_recipe 'perl'
           # chef.add_recipe 'custom_cpan_modules'
+>>>>>>> 29f1efd0d0c26b4f4cbc6ce7dcd385148aec29df
           chef.log_level = 'info'
         end
       else # windows
