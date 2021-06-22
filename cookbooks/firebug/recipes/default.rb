@@ -4,7 +4,8 @@ end
 
 # Define variables for attributes
 use_default_version = false
-account_username = node['vnc']['account_username'];
+# account_username = node['vnc']['account_username'];
+account_username = node['xvfb']['account_username'];
 account_home = "/home/#{account_username}";
 selenium_home = "#{account_home}/selenium"
 selenium_version = node['firebug']['firebug']['version']

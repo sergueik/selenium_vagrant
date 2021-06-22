@@ -173,6 +173,9 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
         # https://forge.puppetlabs.com/danielgil/log4j
         # https://forge.puppetlabs.com/elasticsearch/logstash
       when /ubuntu|debian/
+
+        # NOTE:  need to install libgconf2-4 needed by chrome
+        # currently the node provisioned through chef recipes
         # Use chef provisioner with ubuntu
         config.vm.provision :chef_solo do |chef|
           # for cheffish bug in 12.4.1 see
@@ -180,24 +183,27 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
           # chef.version = '12.3.0'
           chef.version = '13.10.4'
           chef.data_bags_path = 'data_bags'
-	  [ 
+          [ 
             'wrapper_chrome',
             'wrapper_java',
             'wrapper_hostsfile',
             'tweak_proxy_settings',
             # TODO - choose which X server to install
             'xvfb',
-            'wrapper_vnc',
+            # TODO: fix dependency error with groovy-2.4.5.zip
+            # 'wrapper_vnc',
+            # NOTE: there is a dependency between xvfb and wrapper_vnc cookbooks 
+            # in 'account_username'
             'selenium_hub',
             'selenium_node',
             'firebug',
-            'wrapper_groovy',
-            'wrapper_maven',
-            'wrapper_gradle',
-	  ].each do |recipe|
+            # 'wrapper_groovy',
+            #  'wrapper_maven',
+            # 'wrapper_gradle',
+          ].each do |recipe|
             chef.add_recipe recipe
-	  end
-          # dependency cookbooksi listed below for the refence
+          end
+          # dependency cookbooks listed below for the refence
           
             # abcpdf/
             # ark/
@@ -251,8 +257,8 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
       else # windows
         if config_vm_newbox
           config.vm.provision :shell, inline: <<-EOF
-  set-executionpolicy Unrestricted
-  enable-remoting -Force
+            set-executionpolicy Unrestricted
+            enable-remoting -Force
           EOF
           # install .Net 4
           config.vm.provision :shell, :path => 'install_net4.ps1'
