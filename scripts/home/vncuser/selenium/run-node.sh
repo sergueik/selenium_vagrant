@@ -9,7 +9,7 @@ export NODE_PORT=5555
 export HUB_IP_ADDRESS=127.0.0.1
 # this can be the guest or the host ip
 export HUB_PORT=4444
-export JAR_FILENAME='selenium.jar'
+export JAR_FILENAME='selenium-server-standalone.jar'
 export SELENIUM_JAR_VERSION=2.44.0 # currently unused
 export DISPLAY_PORT=99
 export ROLE=node
@@ -89,6 +89,8 @@ cp --force $DEFAULT_CONFIG_FILE $CONFIG_FILE
 
 # default node.json file has port set to 5555
 # the next command replaces the port with specified through NODE_PORT_ARG
+# NOTE: the JSON "schema" is Selenium version-dependent. Sample configurations shown on:
+# https://github.com/SeleniumHQ/selenium/wiki/Grid2#configuring-the-nodes-by-json
 sed -i 's/"port":5555/"port":$NODE_PORT/' $CONFIG_FILE
 export LOG_FILE=/var/log/node-${NODE_PORT}.log
 else
@@ -192,7 +194,40 @@ export SELENIUM_HOME=`pwd`
 export NODE_CONFIG="${SELENIUM_HOME}/node.json"
 # This assumes no other version was installed already
 PATH=$PATH:${SELENIUM_HOME}/firefox
+# echo the command
+cat <<EEE
+java ${JVM_ARGS} \
+-jar \
+${SELENIUM_HOME}/${JAR_FILENAME} \
+-role node \
+-host ${NODE_HOST} \
+-port ${NODE_PORT} \
+-hub http://${HUB_IP_ADDRESS}:${HUB_PORT}/hub/register \
+-nodeConfig ${NODE_CONFIG}  \
+-browserTimeout 12000 -timeout 12000 \
+-Dwebdriver.chrome.driver=/home/vagrant/chromedriver \
+-trustAllSSLCertificates 
 
+EEE
+
+java ${JVM_ARGS} \
+-Dwebdriver.chrome.driver=/home/vagrant/chromedriver \
+-jar \
+${SELENIUM_HOME}/${JAR_FILENAME} \
+-role node \
+-host ${NODE_HOST} \
+-port ${NODE_PORT} \
+-hub http://${HUB_IP_ADDRESS}:${HUB_PORT}/hub/register \
+-nodeConfig ${NODE_CONFIG}  \
+-browserTimeout 12000 -timeout 12000
+
+
+
+echo ${NODE_PID}
+ps ax | grep '[j]ava'
+
+# This is for older version of selenium
+if false ; then
 cat <<EEE
 java ${JVM_ARGS} \
 -classpath \
@@ -205,12 +240,10 @@ org.openqa.grid.selenium.GridLauncher \
 -hub http://${HUB_IP_ADDRESS}:${HUB_PORT}/hub/register \
 -nodeConfig ${NODE_CONFIG}  \
 -browserTimeout 12000 -timeout 12000 \
--ensureCleanSession true \
--Dwebdriver.chrome.driver=/home/vncuser/selenium/chromedriver/chromedriver \
+-Dwebdriver.chrome.driver=/home/vagrant/chromedriver \
 -trustAllSSLCertificates 
 
 EEE
-
 java ${JVM_ARGS} \
 -classpath \
 ${SELENIUM_HOME}/log4j-1.2.17.jar:${SELENIUM_HOME}/${JAR_FILENAME} \
@@ -222,9 +255,7 @@ org.openqa.grid.selenium.GridLauncher \
 -hub http://${HUB_IP_ADDRESS}:${HUB_PORT}/hub/register \
 -nodeConfig ${NODE_CONFIG}  \
 -browserTimeout 12000 -timeout 12000 \
--ensureCleanSession true \
--Dwebdriver.chrome.driver=/home/vncuser/selenium/chromedriver/chromedriver \
+-Dwebdriver.chrome.driver=/home/vagrant/chromedriver \
 -trustAllSSLCertificates &
+fi
 
-echo ${NODE_PID}
-ps ax | grep '[j]ava'
