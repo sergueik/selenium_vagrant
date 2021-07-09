@@ -1,0 +1,3 @@
+XVFBDISPLAY=":99.0"
+XVFBARGS="$XVFBDISPLAY -screen 0 1280x1024x24 -ac +extension GLX +render -noreset"
+# origin: https://raw.githubusercontent.com/davidedg/xvfb-initscript/master/etc/default/xvfb

@@ -1,0 +1,16 @@
+# origin: https://serverdiary.com/linux/how-to-install-xvfb-and-create-systemd-xvfb-service-on-centos-7-8-or-rhel-7-8/
+# https://gist.github.com/ypandit/f4fe751bcbf3ee6a32ca
+# see also
+
+[Unit]
+Description=Xvfb headless plotting
+After=network.target
+
+[Service]
+User=root
+ExecStart=/usr/bin/Xvfb :0 -screen 0 1280x1024x24
+
+[Install]
+WantedBy=multi-user.target
+Alias=Xvfb.service
+Alias=xvfbd.service

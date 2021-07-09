@@ -1,6 +1,12 @@
+#!/bin/sh
+
+# see also: https://github.com/davidedg/xvfb-initscript/blob/master/etc/init.d/xvfb
+
 XVFB=/usr/bin/Xvfb
 XVFBARGS=":99  +extension RANDR -screen 0 1024x768x24 -fbdir /var/run -ac"
 PIDFILE=/var/run/xvfb.pid
+SCRIPTNAME=/etc/init.d/$NAME
+
 case "$1" in
   start)
     echo -n "Starting virtual X frame buffer: Xvfb"
