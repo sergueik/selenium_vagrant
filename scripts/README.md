@@ -24,4 +24,15 @@ DISPLAY_PORT=1000
 DISPLAY=:1000
 ```
 the TCP ports of node and hub are passed via arguments andalso via `node.json`  and `hub.json` (the latter is currentky unused, and may need update).
-### 
+
+### NOTE
+
+In the enterprise environment there may be aditional pending firewall changes that would make testing of public web from the host problematic.
+
+For this situation use `chrome://settings/help` url to show the browser version  and `http://$(hostname -i):4444/grid/console` to show the grid the node is in.
+
+### See Also
+
+https://github.com/SeleniumHQ/selenium/blob/selenium-3.141.59/java/server/src/org/openqa/grid/common/defaults/DefaultHub.json
+https://askubuntu.com/questions/978711/how-do-i-split-a-proc-environ-file-in-separate-lines
+
