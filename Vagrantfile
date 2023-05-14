@@ -255,7 +255,6 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
           # NOTE: time-consuming
           # chef.add_recipe 'perl'
           # chef.add_recipe 'custom_cpan_modules'
->>>>>>> 29f1efd0d0c26b4f4cbc6ce7dcd385148aec29df
           chef.log_level = 'info'
         end
       else # windows
